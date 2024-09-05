@@ -27,6 +27,7 @@ An Indeed scraper that integrates ChatGPT to find suitable jobs based on your pr
 ### Prerequisites:
 - Ensure **Python** and **pip** are installed on your machine.
 - Ensure **Google Chrome** is installed.
+- Openai api key
 
 ### Steps:
 1. Clone the repository:
