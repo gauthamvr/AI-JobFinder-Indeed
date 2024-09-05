@@ -41,7 +41,7 @@ or download the zip file.
 3. Install the required dependencies:
    ```bash
    pip3 install -r requirements.txt
-4. Enter your OpenAI API key and profile details in `config.py`.
+4. Enter your **OpenAI API key** and profile details in `config.py`.
 
 5. Modify `config.py` according to your requirements (keywords, pagination, etc.).
 
@@ -79,11 +79,12 @@ If you see "Error" in all rows of the suitability column in the CSV, check if yo
 
 1. Install the **Google Chrome** browser.
 2. Install **Python** (download from [here](https://www.python.org/downloads/)).
-3. Install **pip** (if necessary):
+4. Clone the repository:
    ```bash
-   python get-pip.py
-4. Clone the project repository or download the zip file.
-5. Navigate to the project folder in the terminal.
+   git clone https://github.com/gauthamvr/Indeed-scraper-automation-AI.git
+or download the zip file.
+
+5. Navigate to the project folder in the terminal, or open a terminal/IDE in the downloaded project folder.
 6. Install Selenium
    ```bash
    pip install selenium
