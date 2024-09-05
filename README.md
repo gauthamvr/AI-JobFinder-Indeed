@@ -116,6 +116,9 @@ or download the zip file.
 3. Copy the root folder location of your Chrome profile.
 4. Paste the profile path into the commented section of `main.py` and uncomment the relevant code to use the profile.
 
-Feel free to contact me for any updates, requests, or questions.
+Feel free to contact me for any updates, requests, questions, or donations. Any contributions are greatly appreciated.
+
+If anyone from Indeed—or anyone for that matter—sees this, please consider recruiting me, I'm looking for a job.
+
 
     
