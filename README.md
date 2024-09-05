@@ -11,7 +11,7 @@ An Indeed scraper that integrates ChatGPT to find suitable jobs based on your pr
 ## How It Works:
 
 1. The script opens Chrome, navigates to Indeed UK, and searches for jobs based on the keywords and pagination settings defined in `config.py`.
-2. Sorts the job date wise - newest at top.
+2. Sorts the jobs by date, with the newest at the top.
 3. For each job detected, it uses ChatGPT to compare the job details with your profile (such as experience, education, etc.) as outlined in `config.py`, and determines if you're suitable for the job.
 4. If the job is deemed suitable, the **profile** and **skills** sections in `template.docx` are modified to include relevant keywords, ensuring your resume passes through Applicant Tracking Systems (ATS).
 5. You can modify or replace `template.docx` with your own resume, but ensure that the placeholders for **profile** and **skills** match those defined in `config.py`.
@@ -57,7 +57,9 @@ or download the zip file.
 Generated resumes can be found in the `resume` folder, named with the job title and job ID for easy identification.
 
 You can manually review the CSV files to identify suitable jobs and apply using the generated resumes.
-If you see Error in all rows of suitability column of csv, delete csv files and try running `main.py` again.
+If you see "Error" in all rows of the suitability column in the CSV, check if you have correctly saved the OpenAI key in `config.py`. Then, delete the CSV files and try running `main.py` again.
+
+**Note:** Deleting the CSV will result in all jobs being processed again, so it is not recommended unless necessary.
 
 
 ## Pro Version (Features)
@@ -95,7 +97,7 @@ If you see Error in all rows of suitability column of csv, delete csv files and 
 10. Modify config.py as needed.
 1. Run the script:
    ```bash
-   python3 main.py
+   python main.py
 12. Job details will be saved in two CSV files. Generated resumes will be stored in the resume folder.
 
 
@@ -103,7 +105,6 @@ If you see Error in all rows of suitability column of csv, delete csv files and 
 ## Recommendations:
 
 - Monitor the first few runs to handle pop-ups, verifications, etc.
-- Using an IDE like PyCharm is recommended. CMD fails occassionally.
 - **Be responsible** to avoid overloading Indeed's site.
 - If a verification page appears, the program might fail, so it's recommended to use a Chrome profile. Captchas will require manual intervention.
 
