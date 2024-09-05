@@ -57,6 +57,7 @@ or download the zip file.
 Generated resumes can be found in the `resume` folder, named with the job title and job ID for easy identification.
 
 You can manually review the CSV files to identify suitable jobs and apply using the generated resumes.
+If you see Error in all rows of suitability column of csv, delete csv files and try running `main.py` again.
 
 
 ## Pro Version (Features)
@@ -102,6 +103,7 @@ You can manually review the CSV files to identify suitable jobs and apply using 
 ## Recommendations:
 
 - Monitor the first few runs to handle pop-ups, verifications, etc.
+- Using an IDE like PyCharm is recommended. CMD fails occassionally.
 - **Be responsible** to avoid overloading Indeed's site.
 - If a verification page appears, the program might fail, so it's recommended to use a Chrome profile. Captchas will require manual intervention.
 
