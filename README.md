@@ -11,16 +11,17 @@ An Indeed scraper that integrates ChatGPT to find suitable jobs based on your pr
 ## How It Works:
 
 1. The script opens Chrome, navigates to Indeed UK, and searches for jobs based on the keywords and pagination settings defined in `config.py`.
-2. For each job, it uses ChatGPT to compare the job details with your profile (such as experience, education, etc.) as outlined in `config.py`, and determines if you're suitable for the job.
-3. If the job is deemed suitable, the **profile** and **skills** sections in `template.docx` are modified to include relevant keywords, ensuring your resume passes through Applicant Tracking Systems (ATS).
-4. You can modify or replace `template.docx` with your own resume, but ensure that the placeholders for **profile** and **skills** match those defined in `config.py`.
-5. The modified resume is saved in the `resume` folder, named with the job title and job ID for later use.
-6. Processed job details are stored in two CSV files:
+2. Sorts the job date wise - newest at top.
+3. For each job detected, it uses ChatGPT to compare the job details with your profile (such as experience, education, etc.) as outlined in `config.py`, and determines if you're suitable for the job.
+4. If the job is deemed suitable, the **profile** and **skills** sections in `template.docx` are modified to include relevant keywords, ensuring your resume passes through Applicant Tracking Systems (ATS).
+5. You can modify or replace `template.docx` with your own resume, but ensure that the placeholders for **profile** and **skills** match those defined in `config.py`.
+6. The modified resume is saved in the `resume` folder, named with the job title and job ID for later use.
+7. Processed job details are stored in two CSV files:
    - `latest_jobs.csv`: Contains details from the most recent job search.
    - `master_jobs.csv`: Tracks all jobs processed to date, preventing duplication and minimizing load on Indeed.
-7. The CSV files contain comprehensive job information, including job title, job ID, date, resume location, suitability, apply link, and more.
-8. Once pagination limits are reached, the script moves on to the next keyword from `config.py` and repeats the process.
-9. You can manually review suitable jobs identified by ChatGPT and apply using the resumes in the `resume` folder.
+8. The CSV files contain comprehensive job information, including job title, job ID, date, resume location, suitability, apply link, and more.
+9. Once pagination limits are reached, the script moves on to the next keyword from `config.py` and repeats the process.
+10. You can manually review suitable jobs identified by ChatGPT and apply using the resumes in the `resume` folder.
 
 ## Installation 🔌
 
@@ -46,7 +47,7 @@ or download the zip file.
 
 6. Run the main script:
    ```bash
-   python3 main.py
+   python main.py
 
 8. Job details will be saved in two CSV files.
   
