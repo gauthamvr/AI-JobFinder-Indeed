@@ -70,7 +70,7 @@ If you see "Error" in all rows of the suitability column in the CSV, check if yo
 - Submits the job application.
 - Loops through the next suitable job and applies automatically.
 
-**Note:** Currently, the pro version is only available by contacting me or through a donation.
+**Note:** The pro version is currently available only by contacting me or through a donation. Once I receive enough donations, I plan to make it publicly available.
 
 
 
@@ -119,6 +119,10 @@ or download the zip file.
 Feel free to contact me for any updates, requests, questions, or donations. Any contributions are greatly appreciated.
 
 If anyone from Indeed—or anyone for that matter—sees this, please consider recruiting me, I'm looking for a job.
+
+### Buy me a coffee
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-donate-yellow)](https://buymeacoffee.com/gauthamvr)
+
 
 
     
