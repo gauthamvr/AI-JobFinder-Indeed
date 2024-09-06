@@ -117,11 +117,18 @@ or download the zip file.
 3. Copy the root folder location of your Chrome profile.
 4. Paste the profile path into the commented section of `main.py` and uncomment the relevant code to use the profile.
 
+## Future Plans:
+
+- Expand testing and ensure compatibility with all Indeed domains.
+
+
 Feel free to contact me for any updates, requests, questions, or donations. Any contributions are greatly appreciated.
 
 If anyone from Indeed—or anyone for that matter—sees this, please consider recruiting me, I'm looking for a job.
 
-### Buy me a coffee
+## Buy me a coffee:
+Your support is greatly appreciated! Every contribution helps.
+
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-donate-yellow)](https://buymeacoffee.com/gauthamvr)
 
 
