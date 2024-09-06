@@ -49,7 +49,7 @@ or download the zip file.
    ```bash
    python main.py
 
-8. Job details will be saved in two CSV files.
+7. Job details will be saved in two CSV files.
   
    - `latest_jobs.csv`: Contains details from the most recent job search.
    - `master_jobs.csv`: Tracks all jobs processed to date, preventing duplication and minimizing load on Indeed.
@@ -79,27 +79,28 @@ If you see "Error" in all rows of the suitability column in the CSV, check if yo
 
 1. Install the **Google Chrome** browser.
 2. Install **Python** (download from [here](https://www.python.org/downloads/)).
-4. Clone the repository:
+3. Clone the repository:
    ```bash
    git clone https://github.com/gauthamvr/Indeed-scraper-automation-AI.git
 or download the zip file.
 
-5. Navigate to the project folder in the terminal, or open a terminal/IDE in the downloaded project folder.
-6. Install Selenium
+4. Navigate to the project folder in the terminal, or open a terminal/IDE in the downloaded project folder.
+5. Install Selenium
    ```bash
    pip install selenium
-7. Install requests
+6. Install requests
    ```bash
    pip install requests
-8. Install python-docx
+7. Install python-docx
    ```bash
    pip install python-docx
-9. Enter your OpenAI API key and profile details in the config.py file.
-10. Modify config.py as needed.
+8. Enter your OpenAI API key and profile details in the config.py file.
+9. Modify config.py as needed.
 1. Run the script:
    ```bash
    python main.py
-12. Job details will be saved in two CSV files. Generated resumes will be stored in the resume folder.
+
+11. Job details will be saved in two CSV files. Generated resumes will be stored in the resume folder.
 
 
 
