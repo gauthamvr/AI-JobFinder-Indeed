@@ -1,6 +1,7 @@
 # Indeed Scraper with ChatGPT Integration
 
-An Indeed scraper that integrates ChatGPT to find suitable jobs based on your profile, modify your resume to include relevant keywords from the job description, and automate parts of the application process.
+An Indeed scraper that integrates with ChatGPT to find suitable jobs based on your profile, modify your resume by including relevant keywords from the job descriptions, and automate parts of the application process. 
+Tired of going through hundreds of jobs only to find that many are not suitable for you? This tool does it for you. It analyzes your profile and job descriptions to determine if you are a good fit, and provides a curated list of jobs after reviewing them all.
 
 ### Important Notes:
 - **Please use responsibly.**
