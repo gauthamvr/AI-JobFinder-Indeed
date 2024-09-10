@@ -6,7 +6,7 @@ An Indeed scraper that integrates ChatGPT to find suitable jobs based on your pr
 - **Please use responsibly.**
 - **ChatGPT can make mistakes, so double-check important information.**
 - **Currently tested only on [Indeed UK](https://uk.indeed.com/) using Chrome browser.**
-- **This is the free version.**
+
 
 ## How It Works:
 
@@ -33,14 +33,14 @@ An Indeed scraper that integrates ChatGPT to find suitable jobs based on your pr
 ### Steps:
 1. Clone the repository:
    ```bash
-   git clone https://github.com/gauthamvr/Indeed-scraper-automation-AI.git
+   git clone https://github.com/gauthamvr/AI-Indeed-scraper-automation.git
 or download the zip file.
 
 2. Navigate to the project folder and open a terminal (or use your preferred IDE).
 
 3. Install the required dependencies:
    ```bash
-   pip3 install -r requirements.txt
+   pip install -r requirements.txt
 4. Enter your **OpenAI API key** and profile details in `config.py`.
 
 5. Modify `config.py` according to your requirements (keywords, pagination, etc.).
@@ -81,7 +81,7 @@ If you see "Error" in all rows of the suitability column in the CSV, check if yo
 2. Install **Python** (download from [here](https://www.python.org/downloads/)).
 3. Clone the repository:
    ```bash
-   git clone https://github.com/gauthamvr/Indeed-scraper-automation-AI.git
+   git clone https://github.com/gauthamvr/AI-Indeed-scraper-automation.git
 or download the zip file.
 
 4. Navigate to the project folder in the terminal, or open a terminal/IDE in the downloaded project folder.
