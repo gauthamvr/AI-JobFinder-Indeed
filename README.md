@@ -6,7 +6,7 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 ### Important Notes:
 - **Please use responsibly.**
 - **ChatGPT can make mistakes, so double-check important information.**
-- **Currently tested only on [Indeed UK](https://uk.indeed.com/) using Chrome browser.**
+- **Make sure that the csv files and the previous chrome instance is closed before running**
 
 
 ## How It Works:
