@@ -1,7 +1,7 @@
-# Indeed Scraper with ChatGPT Integration
+# AI Job finder using Indeed with ChatGPT Integration
 
-An Indeed scraper that integrates with ChatGPT to find suitable jobs based on your profile, modify your resume by including relevant keywords from the job descriptions, and automate parts of the application process. 
-Tired of going through hundreds of jobs only to find that many are not suitable for you? This tool does it for you. It analyzes your profile and job descriptions to determine if you are a good fit, and provides a curated list of jobs after reviewing them all.
+An Indeed scraper that integrates with ChatGPT to find suitable jobs based on your profile and preferences, modifies your profile and skills section of your resume to include relevant keywords from the job description/profile, and automates parts of the application process. 
+Tired of going through hundreds of jobs only to find that many are not suitable for you? You are at the right place. The code will analyze your profile and job descriptions to determine if you are a good fit for the role, and provides a curated list of jobs after going through the latest listing of jobs in Indeed.
 
 ### Important Notes:
 - **Please use responsibly.**
@@ -11,17 +11,17 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 
 ## How It Works:
 
-1. The script opens Chrome, navigates to Indeed UK, and searches for jobs based on the keywords and pagination settings defined in `config.py`.
+1. The code opens Chrome, navigates to Indeed UK, and searches for the jobs you are looking for based on the keywords and pagination settings defined in `config.py`.
 2. Sorts the jobs by date, with the newest at the top.
-3. For each job detected, it uses ChatGPT to compare the job details with your profile (such as experience, education, etc.) as outlined in `config.py`, and determines if you're suitable for the job.
-4. If the job is deemed suitable, the **profile** and **skills** sections in `template.docx` are modified to include relevant keywords, ensuring your resume passes through Applicant Tracking Systems (ATS).
+3. For each job detected, it uses ChatGPT to compare the job description/requirement with your profile and preferences (such as experience, education, etc.) as outlined in `config.py`, and determines if you're suitable for the job.
+4. If the job is deemed suitable, the **profile** and **skills** sections in the resume template `template.docx` are modified to include relevant keywords, ensuring your resume passes through Applicant Tracking Systems (ATS).
 5. You can modify or replace `template.docx` with your own resume, but ensure that the placeholders for **profile** and **skills** match those defined in `config.py`.
 6. The modified resume is saved in the `resume` folder, named with the job title and job ID for later use.
 7. Processed job details are stored in two CSV files:
    - `latest_jobs.csv`: Contains details from the most recent job search.
    - `master_jobs.csv`: Tracks all jobs processed to date, preventing duplication and minimizing load on Indeed.
 8. The CSV files contain comprehensive job information, including job title, job ID, date, resume location, suitability, apply link, and more.
-9. Once pagination limits are reached, the script moves on to the next keyword from `config.py` and repeats the process.
+9. Once pagination limits are reached, the script moves on to searching for the next job using the keyword from `config.py` and repeats the process.
 10. You can manually review suitable jobs identified by ChatGPT and apply using the resumes in the `resume` folder.
 
 ## Installation 🔌
@@ -34,7 +34,7 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 ### Steps:
 1. Clone the repository:
    ```bash
-   git clone https://github.com/gauthamvr/AI-Indeed-scraper-automation.git
+   git clone https://github.com/gauthamvr/AI-JobFinder-Indeed.git
 or download the zip file.
 
 2. Navigate to the project folder and open a terminal (or use your preferred IDE).
@@ -82,7 +82,7 @@ If you see "Error" in all rows of the suitability column in the CSV, check if yo
 2. Install **Python** (download from [here](https://www.python.org/downloads/)).
 3. Clone the repository:
    ```bash
-   git clone https://github.com/gauthamvr/AI-Indeed-scraper-automation.git
+   git clone https://github.com/gauthamvr/AI-JobFinder-Indeed.git
 or download the zip file.
 
 4. Navigate to the project folder in the terminal, or open a terminal/IDE in the downloaded project folder.
@@ -111,7 +111,7 @@ or download the zip file.
 - **Be responsible** to avoid overloading Indeed's site.
 - If a verification page appears, the program might fail, so it's recommended to use a Chrome profile. Captchas will require manual intervention.
 
-#### Chrome Profile Setup (Recommended):
+#### Chrome Profile Setup (Not necessary, but recommended):
 
 1. Create a new profile on Chrome.
 2. Launch the new profile, go to [Indeed UK](https://uk.indeed.com/), and log in (optional but recommended).
@@ -125,7 +125,6 @@ or download the zip file.
 
 Feel free to contact me for any updates, requests, questions, or donations. Any contributions are greatly appreciated.
 
-If anyone from Indeed—or anyone for that matter—sees this, please consider recruiting me, I'm looking for a job.
 
 ## Buy me a coffee:
 Your support is greatly appreciated! Every contribution helps.
