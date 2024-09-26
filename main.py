@@ -15,16 +15,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, MoveTargetOutOfBoundsException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, \
+    MoveTargetOutOfBoundsException, TimeoutException
 from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-
 import config
 
 template_path = config.template_path
-
 
 
 def extract_json_from_text(text: str) -> str:
@@ -77,7 +76,8 @@ def ask_chatgpt(job_description: str) -> dict:
             "temperature": 1.0
         }
 
-        response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, data=json.dumps(data))
+        response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, data=json.dumps(data),
+                                 timeout=10)
         response.raise_for_status()  # Raise an exception for HTTP errors
         message = response.json()['choices'][0]['message']['content'].strip()
         # print(message)
@@ -168,11 +168,12 @@ def parse_gpt_response(data: dict) -> str:
         print("Is it suitable?", suitable_value)
         return suitable_value
     except KeyError:
-        return "Error"
+        return "API key Error"
+
 
 # Path to the user profile directory
-        # user_profile = "C:/Users/user/AppData/Local/Google/Chrome/User Data/Profile 2"
-        # chrome_options.add_argument(f"user-data-dir={user_profile}")
+# user_profile = "C:/Users/user/AppData/Local/Google/Chrome/User Data/Profile 2"
+# chrome_options.add_argument(f"user-data-dir={user_profile}")
 
 
 class IndeedAutoApplyBot:
@@ -190,7 +191,6 @@ class IndeedAutoApplyBot:
         url = config.indeed_homepage_url
         self.browser.get(url)
         time.sleep(random.uniform(1.5, 3.0))  # Random delay
-
 
         # Load or create the master CSV file
         self.master_csv = config.master_csv
@@ -226,7 +226,6 @@ class IndeedAutoApplyBot:
             pass
         except Exception as e:
             print(f"Error while sending keys to close popup: {e}")
-
 
     def try_click(self, element, retries=3):
         """Try to click an element, handle MoveTargetOutOfBoundsException by retrying after closing popups."""
@@ -288,23 +287,17 @@ class IndeedAutoApplyBot:
         self.simulate_typing(query_input, job_search_keyword)
         time.sleep(random.uniform(0.5, 1.5))
 
-        find_btn = self.browser.find_element(By.XPATH, value='//*[@id="jobsearch"]/div/div[2]/button')
+        find_btn = self.browser.find_element(By.XPATH, "//button[contains(text(), 'Find jobs')]")
         ActionChains(self.browser).move_to_element(find_btn).click().perform()
         time.sleep(random.uniform(1.5, 3.0))  # Random delay
 
         try:
-            find_btn = self.browser.find_element(By.XPATH, value='//*[@id="dateLabel"]')
-            ActionChains(self.browser).move_to_element(find_btn).click().perform()
+            date_btn = self.browser.find_element(By.XPATH, value='//*[@id="dateLabel"]')
+            ActionChains(self.browser).move_to_element(date_btn).click().perform()
             time.sleep(random.uniform(1.5, 3.0))  # Random delay
 
         except NoSuchElementException:
-            try:
-                alternative_btn = self.browser.find_element(By.XPATH,
-                                                            value='//*[@id="jobsearch-JapanPage"]/div/div[5]/div/div[1]/div[3]/div/div/div[1]/span[2]/a')
-                ActionChains(self.browser).move_to_element(alternative_btn).click().perform()
-                time.sleep(random.uniform(1.5, 3.0))  # Random delay
-            except NoSuchElementException:
-                print("Neither the primary nor the alternative element was found.")
+            print("Date sort error")
 
     def extract_job_id(self, url):
         """Extract the job ID from the Indeed job URL."""
@@ -344,7 +337,7 @@ class IndeedAutoApplyBot:
             self.find_job(keyword)  # Search for the current keyword
             is_next_page = True
             page_count = 0  # Counter to track the number of pages processed
-            
+
             while is_next_page and page_count < config.pagination_limit:
                 job_listings = self.browser.find_elements(By.CSS_SELECTOR, "ul.css-zu9cdh li")
 
@@ -355,7 +348,7 @@ class IndeedAutoApplyBot:
 
                         job_id = self.extract_job_id(job_listing_url)
                         if job_id is None or job_id in self.processed_jobs:
-                            print(f"Skipping already processed job or invalid job ID: {job_listing_url}")
+                            print(f"Skipping already processed job ID: {job_id}")
                             continue
 
                         job_title = job_title_element.text
@@ -367,7 +360,7 @@ class IndeedAutoApplyBot:
                             print(f"Failed to click job title after multiple retries: {job_title}")
                             continue
 
-                        time.sleep(random.uniform(2.0, 4.0))  # Random delay after clicking
+                        time.sleep(random.uniform(2.0, 3.0))  # Random delay after clicking
 
                         job_description = self.browser.find_element(By.ID, "jobDescriptionText").text
 
@@ -392,17 +385,42 @@ class IndeedAutoApplyBot:
                             posting_date = "Not available"
 
                         internal_apply_button_found = "No"  # Flag to track if the internal apply button is found
+                        apply_link = "Apply link not found"
+
                         try:
-                            external_apply_button = self.browser.find_element(By.CSS_SELECTOR,
-                                                                              "div#applyButtonLinkContainer button")
-                            apply_link = external_apply_button.get_attribute("href")
+                            # Try to find the internal apply button
+                            internal_apply_button = self.browser.find_element(By.ID, "indeedApplyButton")
+                            # Set flag to Yes since the internal button exists
+                            internal_apply_button_found = "Yes"
+                            apply_link = self.browser.current_url  # Assuming internal apply redirects to the current URL
+
                         except NoSuchElementException:
                             try:
-                                internal_apply_button = self.browser.find_element(By.ID, "indeedApplyButton")
-                                apply_link = self.browser.current_url
-                                internal_apply_button_found = "Yes"
+                                # Try to find the external apply button using corrected XPath
+                                external_apply_button = self.browser.find_element(By.XPATH,
+                                                                                  "//button[.//span[text()='Apply now']]")
+                                apply_link = external_apply_button.get_attribute("href")
+
+                                # Check if the href attribute is found
+                                if not apply_link:
+                                    apply_link = "Apply link not available"
+                                internal_apply_button_found = "No"
+
                             except NoSuchElementException:
-                                apply_link = "Apply link not available"
+                                try:
+                                    # Try alternative CSS selector for external apply button
+                                    external_apply_button = self.browser.find_element(By.CSS_SELECTOR,
+                                                                                      "div#applyButtonLinkContainer button")
+                                    apply_link = external_apply_button.get_attribute("href")
+
+                                    if not apply_link:
+                                        apply_link = "Apply link not available"
+                                    internal_apply_button_found = "No"
+
+                                except NoSuchElementException:
+                                    # Apply link not found
+                                    apply_link = "Apply link not found"
+                                    internal_apply_button_found = "No"
 
                         data = ask_chatgpt(job_description)
                         suitability = parse_gpt_response(data)
@@ -438,7 +456,7 @@ class IndeedAutoApplyBot:
                         self.browser.execute_script("arguments[0].scrollIntoView({block: 'center'});",
                                                     job_title_element)
                         ActionChains(self.browser).move_to_element(job_title_element).click().perform()
-                        time.sleep(random.uniform(2.0, 4.0))
+                        time.sleep(random.uniform(2.0, 3.0))
 
                     # Close any popup that might appear
                     self.close_popups()
@@ -452,16 +470,15 @@ class IndeedAutoApplyBot:
                         self.browser.execute_script("arguments[0].scrollIntoView({block: 'center'});",
                                                     next_page_button)
                         ActionChains(self.browser).move_to_element(next_page_button).click().perform()
-                        time.sleep(random.uniform(2.0, 4.0))  # Wait for the next page to load
+                        time.sleep(random.uniform(2.0, 3.0))  # Wait for the next page to load
                     except NoSuchElementException:
                         is_next_page = False  # If no next page, exit the loop
                 else:
                     is_next_page = False  # Stop after 3 pages
 
 
-
 if __name__ == "__main__":
-    JOB_SEARCH =config.job_search_keywords
+    JOB_SEARCH = config.job_search_keywords
     bot = IndeedAutoApplyBot()
     bot.scrape_job_listings(JOB_SEARCH)
 
