@@ -115,7 +115,7 @@ or download the zip file.
 #### Chrome Profile Setup (Not necessary, but recommended):
 
 1. Create a new profile on Chrome.
-2. Launch the new profile, go to [Indeed UK](https://uk.indeed.com/), and log in (optional but recommended).
+2. Launch the new profile, go to indeed, and log in (optional but recommended).
 3. Copy the root folder location of your Chrome profile.
 4. Paste the profile path into the commented section of `main.py` and uncomment the relevant code to use the profile.
 
