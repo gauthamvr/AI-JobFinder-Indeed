@@ -22,7 +22,6 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from form_processor import apply_for_job  # Import the function
 from form_processor import move_html
-
 import config
 
 template_path = config.template_path
@@ -509,6 +508,9 @@ class IndeedAutoApplyBot:
 
 
 if __name__ == "__main__":
+    if not config.api_key:
+        print("Error: The API key is empty. The program wont identify sutiable jobs, it will only scrape")
+
     JOB_SEARCH = config.job_search_keywords
     bot = IndeedAutoApplyBot()
     bot.scrape_job_listings(JOB_SEARCH)
