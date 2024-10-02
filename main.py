@@ -20,6 +20,8 @@ from selenium.common.exceptions import NoSuchElementException, ElementClickInter
 from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+from form_processor import apply_for_job  # Import the function
+from form_processor import move_html
 
 import config
 
@@ -180,6 +182,17 @@ class IndeedAutoApplyBot:
     def __init__(self) -> None:
         chrome_options = webdriver.ChromeOptions()
 
+        # Define the profile directory
+        profile_dir = os.path.join(os.getcwd(), 'chrome_profile')
+
+        # Create the profile directory if it doesn't exist
+        if not os.path.exists(profile_dir):
+            os.makedirs(profile_dir)
+            print(f"Created new Chrome profile directory at {profile_dir}")
+
+        # Add the user-data-dir option to ChromeOptions
+        chrome_options.add_argument(f"--user-data-dir={profile_dir}")
+
         # Prevent automation detection
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
@@ -254,7 +267,8 @@ class IndeedAutoApplyBot:
                 writer = csv.writer(file)
                 writer.writerow(
                     ["Job Title", "Company Name", "Location", "Job Description", "Posting Date", "Apply Link",
-                     "Job Listing URL", "Job ID", "Date Recorded", "Internal apply", "Resume path", "Suitability"])
+                     "Job Listing URL", "Job ID", "Date Recorded", "Internal apply", "Resume path", "AI answer",
+                     "Suitability", "Application status"])
             return set()
 
     def prepare_latest_csv(self):
@@ -263,7 +277,7 @@ class IndeedAutoApplyBot:
             writer = csv.writer(file)
             writer.writerow(["Job Title", "Company Name", "Location", "Job Description", "Posting Date", "Apply Link",
                              "Job Listing URL", "Job ID", "Date Recorded", "Internal apply", "Resume path",
-                             "Suitability"])
+                             "AI answer", "Suitability", "Application status"])
 
     def simulate_typing(self, element, text):
         """Simulate human-like typing in an input field."""
@@ -386,6 +400,7 @@ class IndeedAutoApplyBot:
 
                         internal_apply_button_found = "No"  # Flag to track if the internal apply button is found
                         apply_link = "Apply link not found"
+                        internal_apply_button = None  # Initialize variable
 
                         try:
                             # Try to find the internal apply button
@@ -428,24 +443,40 @@ class IndeedAutoApplyBot:
                         date_recorded = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
                         resume_path = None
+                        gpt_answer = None
+                        application_status = None
                         if suitability == "Yes":
                             update_resume_with_json(data, template_path)
 
+                            if internal_apply_button_found == "Yes" and config.auto_apply.lower() == "yes":
+                                if internal_apply_button is not None:
+                                    gpt_answer, application_status = apply_for_job(self.browser, internal_apply_button,
+                                                                                   resume_file_name=config.current_resume)
+                                else:
+                                    # Handle the case where internal_apply_button is None
+                                    print("Internal apply button not found, cannot proceed with application.")
+                                    gpt_answer = None
+                                    application_status = "Failed to apply - internal apply button not found"
+                            else:
+                                gpt_answer = None
+                                application_status = "Not applied"
+
                             resume_path = move_resume(job_title, job_id)
+                            html_path = move_html(job_title, job_id)
 
                         with open(self.master_csv, mode='a', newline='', encoding='utf-8') as master_file:
                             master_writer = csv.writer(master_file)
                             master_writer.writerow(
                                 [job_title, company_name, location, job_description, posting_date, apply_link,
                                  job_listing_url, job_id, date_recorded, internal_apply_button_found, resume_path,
-                                 suitability])
+                                 gpt_answer, suitability, application_status])
 
                         with open(self.latest_csv, mode='a', newline='', encoding='utf-8') as latest_file:
                             latest_writer = csv.writer(latest_file)
                             latest_writer.writerow(
                                 [job_title, company_name, location, job_description, posting_date, apply_link,
                                  job_listing_url, job_id, date_recorded, internal_apply_button_found, resume_path,
-                                 suitability])
+                                 gpt_answer, suitability, application_status])
 
                         self.processed_jobs.add(job_id)
 
