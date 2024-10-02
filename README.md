@@ -61,25 +61,26 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 - **Openai api key**
 
 ### Steps:
-1. Clone the repository:
+1. Download the zip file or
+   Clone the repository if you have git installed:
    ```bash
    git clone https://github.com/gauthamvr/AI-JobFinder-Indeed.git
-or download the zip file.
 
-2. Navigate to the project folder and open a terminal (or use your preferred IDE).
 
-3. Install the required dependencies:
+3. Navigate to the project folder and open a terminal/cmd (or use your preferred IDE).
+
+4. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
-4. Enter your **OpenAI API key** and profile details in `config.py`.
+5. Enter your **OpenAI API key** and profile details in `config.py`.
 
-5. Modify `config.py` according to your requirements (keywords, pagination, etc.).
+6. Modify `config.py` according to your requirements (keywords, pagination, etc.).
 
-6. Run the main script:
+7. Run the main script:
    ```bash
    python main.py
 
-7. Job details will be saved in two CSV files.
+8. Job details will be saved in two CSV files.
   
    - `latest_jobs.csv`: Contains details from the most recent job search.
    - `master_jobs.csv`: Tracks all jobs processed to date, preventing duplication and minimizing load on Indeed.
@@ -102,28 +103,24 @@ If you see "Error" in all rows of the suitability column in the CSV, check if yo
 
 1. Install the **Google Chrome** browser.
 2. Install **Python** (download from [here](https://www.python.org/downloads/)).
-3. Clone the repository:
+3. Download the zip file by pressing the green button or
+   Clone the repository if you have git installed using the terminal/cmd:
    ```bash
    git clone https://github.com/gauthamvr/AI-JobFinder-Indeed.git
-or download the zip file.
 
-4. Navigate to the project folder in the terminal, or open a terminal/IDE in the downloaded project folder.
-5. Install Selenium
+
+5. Navigate to the project folder in the terminal, or open a terminal/IDE in the downloaded project folder. If you downloaded the zip, extract it and navigate to the extracted folder.
+6. Install the required dependencies by running the command in terminal/IDE:
    ```bash
-   pip install selenium
-6. Install requests
-   ```bash
-   pip install requests
-7. Install python-docx
-   ```bash
-   pip install python-docx
-8. Enter your OpenAI API key and profile details in the config.py file.
-9. Modify config.py as needed.
-1. Run the script:
+   pip install -r requirements.txt
+
+7. Open the `config.py` file and Enter your OpenAI API key and profile details.
+8. Modify config.py as needed.
+9. Run the script:
    ```bash
    python main.py
 
-11. Job details will be saved in two CSV files. Generated resumes will be stored in the resume folder. Submissions will be in the Submissions folder
+10. Job details will be saved in two CSV files. Generated resumes will be stored in the resume folder. Submissions will be in the Submissions folder
 
 
 
