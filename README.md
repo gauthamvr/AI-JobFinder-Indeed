@@ -8,11 +8,29 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 - **ChatGPT can make mistakes, so double-check important information.**
 - **The code has been written to mimic user behavior, which may make it appear slow**
 - **Make sure that the csv files and the previous chrome instance is closed before running**
+- **If no api key is provided, it will only scrape the listings into the csv**
+
+## Applications
+
+- Can be used as just a scraper
+- Can be used just to identify suitable jobs based on your profile
+- Can be used to apply automatically for the jobs that are suitable and have an internal application link.
+
+## Features
+
+- Can be used as a job scraper.
+- Identifies suitable jobs based on user profiles.
+- Automatically applies for suitable jobs.
+- Automates the entire job application process for jobs that are suitable and have an internal application link.
+- Automatically uploads the modified resume.
+- Uses AI to answer employer questions based on your profile.
+- Submits the job application.
+- Loops through the next suitable job and applies automatically.
 
 
 ## How It Works:
 
-1. The code opens Chrome, navigates to Indeed UK, and searches for the jobs you are looking for based on the keywords and pagination settings defined in `config.py`.
+1. The code opens Chrome, navigates to Indeed address provided in the `config.py`, and searches for the jobs you are looking for based on the keywords and pagination settings defined in `config.py`.
 2. Sorts the jobs by date, with the newest at the top.
 3. For each job detected, it uses ChatGPT to compare the job description/requirement with your profile and preferences (such as experience, education, etc.) as outlined in `config.py`, and determines if you're suitable for the job.
 4. If the job is deemed suitable, the **profile** and **skills** sections in the resume template `template.docx` are modified to include relevant keywords, ensuring your resume passes through Applicant Tracking Systems (ATS).
@@ -24,6 +42,15 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 8. The CSV files contain comprehensive job information, including job title, job ID, date, resume location, suitability, apply link, and more.
 9. Once pagination limits are reached, the script moves on to searching for the next job using the keyword from `config.py` and repeats the process.
 10. You can manually review suitable jobs identified by ChatGPT and apply using the resumes in the `resume` folder.
+11. If you want to auto-apply for jobs with an internal application button:
+       - Ensure you are logged in to Indeed in the browser used by the program.
+       - Make sure the auto_apply is set to "Yes" and final_apply_button is set to "Yes" in the `config.py` file.
+       - The program will automatically answer questions asked by the employer based on your profile.
+       - Therefore, it is essential to ensure that profile_answer_questions in the `config.py` file contains all the necessary information.
+       - Add or modify the two profiles in the `config.py` to suit your needs/based on the common questions you face from the employer.
+       - If the answer is not available in the profile, ChatGPT might generate an inaccurate response, so please be cautious.
+       - If final_apply_button is not set to "Yes", the program will not click the submit button at the end of the application.
+       - Feel free to test everything to ensure it works properly before enabling the final submit button.
 
 ## Installation 🔌
 
@@ -64,15 +91,8 @@ If you see "Error" in all rows of the suitability column in the CSV, check if yo
 **Note:** Deleting the CSV will result in all jobs being processed again, so it is not recommended unless necessary.
 
 
-## Pro Version (Features)
 
-- Automates the entire job application process for jobs that are suitable and have an internal application link.
-- Automatically uploads the modified resume.
-- Uses AI to answer employer questions based on your profile.
-- Submits the job application.
-- Loops through the next suitable job and applies automatically.
 
-**Note:** The pro version is currently available only by contacting me or through a donation. Once I receive enough donations, I plan to make it publicly available.
 
 
 
