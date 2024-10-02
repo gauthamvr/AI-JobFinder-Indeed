@@ -9,6 +9,7 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 - **The code has been written to mimic user behavior, which may make it appear slow**
 - **Make sure that the csv files and the previous chrome instance is closed before running**
 - **If no api key is provided, it will only scrape the listings into the csv**
+- **Run with chrome maximized (Recommended)**
 
 ## Applications
 
