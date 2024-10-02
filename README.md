@@ -18,7 +18,7 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 
 ## Features
 
-- Can be used as a job scraper.
+- Scrapes the jobs from Indeed.
 - Identifies suitable jobs based on user profiles.
 - Automatically applies for suitable jobs.
 - Automates the entire job application process for jobs that are suitable and have an internal application link.
