@@ -48,10 +48,11 @@ def apply_for_job(browser, internal_apply_button, resume_file_name):
         browser.switch_to.window(new_window)
         print("Switched to the new window")
 
+
+        time.sleep(random.uniform(4.0, 5.0))
         # Step 3.5: Check if the URL has 'resume' in it
         current_url = browser.current_url
         previous_url = current_url
-        time.sleep(random.uniform(2.0, 3.0))
         if 'resume' in current_url:
             print("URL contains 'resume'. Proceeding with the steps.")
         else:
@@ -65,10 +66,12 @@ def apply_for_job(browser, internal_apply_button, resume_file_name):
                 continue_buttons = browser.find_elements(By.XPATH, "//button//span[text()='Continue']")
 
                 if continue_buttons:
+                    button_clicked = False
                     for button in continue_buttons:
                         try:
                             # Smooth scroll to the button
-                            browser.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", button)
+                            browser.execute_script(
+                                "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", button)
                             ActionChains(browser).move_to_element(button).click().perform()
                             print("Continue button clicked.")
                             time.sleep(random.uniform(2.0, 3.0))
@@ -77,85 +80,126 @@ def apply_for_job(browser, internal_apply_button, resume_file_name):
                             current_url = browser.current_url
                             if current_url != previous_url:
                                 print("URL has changed after clicking 'Continue' button.")
-                                break  # Exit the for loop
+                                previous_url = current_url
+                                button_clicked = True
+                                break  # Exit the for loop after clicking one button
                         except Exception as e:
                             print(f"Could not click 'Continue' button: {e}")
+
+                    if button_clicked:
+                        # We have clicked a button, check if 'resume' is now in current_url
+                        if 'resume' in current_url:
+                            print("URL now contains 'resume'. Proceeding with the steps.")
+                            break  # Exit the while loop
+                        else:
+                            # URL changed but doesn't contain 'resume', proceed to the next attempt
+                            print("URL changed but does not contain 'resume'. Continuing to next attempt.")
+                            continue  # Continue the while loop
                     else:
-                        # No 'Continue' button could be clicked, wait a bit before retrying
-                        print("No clickable 'Continue' buttons found. Waiting before retrying.")
+                        # No buttons could be clicked
+                        print("No clickable 'Continue' buttons were successfully clicked. Waiting before retrying.")
                         time.sleep(random.uniform(2.0, 3.0))
                 else:
                     # No 'Continue' buttons found on the page
                     print("No 'Continue' buttons found on the page.")
                     break  # Exit the while loop
 
-                if current_url != previous_url:
-                    previous_url = current_url
-                    # Check if 'resume' is now in the URL
-                    if 'resume' in current_url:
-                        print("URL now contains 'resume'. Proceeding with the steps.")
-                        break  # Exit the while loop
-                else:
-                    print("URL did not change after clicking 'Continue' button.")
+                print("URL did not change to a 'resume' page after clicking 'Continue' button.")
 
             if 'resume' not in current_url:
                 print("Unable to reach a URL containing 'resume' after maximum attempts.")
-                # You might choose to handle this differently, but for this example, we'll return a failure
+                # Handle this case as needed; for example, return a failure
                 return None, "Failed"
 
+        # Initialize gpt_answer and application_status
+        gpt_answer = None
+        application_status = "Failed"
+
         # Step 4: Wait until the specific element on the new page has loaded
-        WebDriverWait(browser, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "label[for$='-file-resume-input']"))
-        )
-        print("Page loaded")
-        time.sleep(5)
+        try:
+            WebDriverWait(browser, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "label[for$='-file-resume-input']"))
+            )
+            print("Page loaded")
+            time.sleep(5)
+        except Exception as e:
+            print(f"Element not found in Step 4: {e}")
+            # Continue to next step
 
         # Step 5: Select the radio button to upload the resume file
-        label_for_radio = browser.find_element(By.CSS_SELECTOR, "label[for$='-file-resume-input']")
-        ActionChains(browser).move_to_element(label_for_radio).click().perform()
-        time.sleep(random.uniform(2.0, 3.0))  # Wait for the next page to load
-        print("Radio button selected successfully!")
+        try:
+            label_for_radio = browser.find_element(By.CSS_SELECTOR, "label[for$='-file-resume-input']")
+            ActionChains(browser).move_to_element(label_for_radio).click().perform()
+            time.sleep(random.uniform(2.0, 3.0))  # Wait for the next page to load
+            print("Radio button selected successfully!")
+        except Exception as e:
+            print(f"Element not found in Step 5: {e}")
+            # Continue to next step
 
         # Step 6: Click the "CV options" button
-        cv_options_button = browser.find_element(By.ID, 'menu-button--menu--1')
-        ActionChains(browser).move_to_element(cv_options_button).click().perform()
-        time.sleep(random.uniform(1.0, 2.0))
-        print("CV options button clicked successfully!")
+        try:
+            cv_options_button = browser.find_element(By.ID, 'menu-button--menu--1')
+            ActionChains(browser).move_to_element(cv_options_button).click().perform()
+            time.sleep(random.uniform(1.0, 2.0))
+            print("CV options button clicked successfully!")
+        except Exception as e:
+            print(f"Element not found in Step 6: {e}")
+            # Continue to next step
 
         # Step 7: Upload the resume file
-        file_path = os.path.abspath(resume_file_name)  # Get the absolute path of the file
-        file_input = browser.find_element(By.CSS_SELECTOR, "input[type='file']")
-        file_input.send_keys(file_path)
-        print(f"File {file_path} uploaded successfully!")
-        time.sleep(random.uniform(3.0, 4.0))  # Wait for the next page to load
+        try:
+            file_path = os.path.abspath(resume_file_name)  # Get the absolute path of the file
+            file_input = browser.find_element(By.CSS_SELECTOR, "input[type='file']")
+            file_input.send_keys(file_path)
+            print(f"File {file_path} uploaded successfully!")
+            time.sleep(random.uniform(3.0, 4.0))  # Wait for the next page to load
+        except Exception as e:
+            print(f"Element not found in Step 7: {e}")
+            # Continue to next step
 
         # Step 8: Select the second radio button
-        label_for_radio = browser.find_element(By.CSS_SELECTOR, "label[for$='-resume-private-input']")
-        ActionChains(browser).move_to_element(label_for_radio).click().perform()
-        time.sleep(random.uniform(2.0, 4.0))
-        print("Second radio button selected successfully!")
+        try:
+            label_for_radio = browser.find_element(By.CSS_SELECTOR, "label[for$='-resume-private-input']")
+            ActionChains(browser).move_to_element(label_for_radio).click().perform()
+            time.sleep(random.uniform(2.0, 4.0))
+            print("Second radio button selected successfully!")
+        except Exception as e:
+            print(f"Element not found in Step 8: {e}")
+            # Continue to next step
 
         # Step 9: Click the "Save" button
-        save_button = WebDriverWait(browser, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='ResumePrivacyModal-SaveBtn']"))
-        )
-        browser.execute_script("arguments[0].scrollIntoView(true);", save_button)
-        time.sleep(1)  # Optional wait for stability
-        ActionChains(browser).move_to_element(save_button).click().perform()
-        time.sleep(random.uniform(3.0, 4.0))
-        print("Save button clicked successfully!")
+        try:
+            save_button = WebDriverWait(browser, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='ResumePrivacyModal-SaveBtn']"))
+            )
+            browser.execute_script("arguments[0].scrollIntoView(true);", save_button)
+            time.sleep(1)  # Optional wait for stability
+            ActionChains(browser).move_to_element(save_button).click().perform()
+            time.sleep(random.uniform(3.0, 4.0))
+            print("Save button clicked successfully!")
+        except Exception as e:
+            print(f"Element not found in Step 9: {e}")
+            # Continue to next step
 
         # Step 10: Process forms (assuming process_forms is defined elsewhere)
-        gpt_answer, application_status = process_forms(browser)
+        try:
+            gpt_answer, application_status = process_forms(browser)
+        except Exception as e:
+            print(f"Error during form processing in Step 10: {e}")
+            # application_status remains "Failed"
 
         # Step 11: Close the new tab and switch back to the original window
-        browser.switch_to.window(new_window)
-        browser.close()
-        browser.switch_to.window(original_window)
-        time.sleep(random.uniform(0.5, 1.5))
-        print("Application process completed.")
+        try:
+            browser.switch_to.window(new_window)
+            browser.close()
+            browser.switch_to.window(original_window)
+            time.sleep(random.uniform(0.5, 1.5))
+            print("Application process completed.")
+        except Exception as e:
+            print(f"Error during window switching in Step 11: {e}")
 
         return gpt_answer, application_status
+
 
     except Exception as e:
         print(f"An error occurred: {e}")
