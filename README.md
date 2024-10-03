@@ -86,6 +86,10 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
    - `latest_jobs.csv`: Contains details from the most recent job search.
    - `master_jobs.csv`: Tracks all jobs processed to date, preventing duplication and minimizing load on Indeed.
 
+9. If you want to auto-apply for jobs that has an internal application button:
+ - Ensure you are logged in to Indeed in the browser used by the program.
+ - Make sure the 'auto_apply' is set to "Yes" and 'final_apply_button' is set to "Yes" in the config.py file.
+
 Generated resumes can be found in the `resume` folder, named with the job title and job ID for easy identification. Gnerated sumbissions can be found in the 'Submissions' folder.
 
 You can manually review the CSV files to identify suitable jobs and apply using the generated resumes or you can chose to autoapply (detailed at the top).
