@@ -389,7 +389,7 @@ def send_to_openai(profile_description, form_fields):
         fields_text = "\n".join(field_descriptions)
 
         data = {
-            "model": "gpt-4o-mini",  # Replace with the model you have access to
+            "model": config.gpt_model,  # Replace with the model you have access to
             "messages": [
                 {"role": "system",
                  "content": "You are a helpful assistant that fills in form fields based on a profile."},
@@ -766,7 +766,7 @@ def move_html(job_title: str, job_id: str):
     try:
         current_resume = "Gautham - Answers.html"
         # Define the paths
-        html_folder = "Submissions"
+        html_folder = config.submissions_folder
         os.makedirs(html_folder, exist_ok=True)
 
         new_html_name = f"{job_title} - {job_id}.html"

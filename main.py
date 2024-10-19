@@ -51,7 +51,7 @@ def ask_chatgpt(job_description: str) -> dict:
         }
 
         data = {
-            "model": "gpt-4o-mini",  # Replace with the model you have access to
+            "model": config.gpt_model,  # Replace with the model you have access to
             "messages": [
                 {"role": "system",
                  "content": "You are a helpful assistant that determines the suitability of my profile with the job description."},
@@ -118,15 +118,16 @@ def update_resume_with_json(data: dict, template_path: str):
 
     # Define a function to set font to Times New Roman, size 12, and remove bold formatting
     def format_paragraph(paragraph):
-        for run in paragraph.runs:
-            run.font.name = config.font
-            run.font.size = Pt(config.size)
-            run.font.bold = config.bold
-            # Ensure Times New Roman for each run by modifying the font element
-            rFonts = OxmlElement('w:rFonts')
-            rFonts.set(qn('w:ascii'), config.font)
-            rFonts.set(qn('w:hAnsi'), config.font)
-            run._r.get_or_add_rPr().append(rFonts)
+        if config.modify_font.lower() == "yes":
+            for run in paragraph.runs:
+                run.font.name = config.font
+                run.font.size = Pt(config.size)
+                run.font.bold = config.bold
+                # Ensure Times New Roman for each run by modifying the font element
+                rFonts = OxmlElement('w:rFonts')
+                rFonts.set(qn('w:ascii'), config.font)
+                rFonts.set(qn('w:hAnsi'), config.font)
+                run._r.get_or_add_rPr().append(rFonts)
 
     # Iterate through paragraphs and replace placeholders, then apply formatting
     for paragraph in doc.paragraphs:
@@ -144,7 +145,7 @@ def update_resume_with_json(data: dict, template_path: str):
 
 def move_resume(job_title: str, job_id: str):
     try:
-        current_resume = "Current - resume.docx"
+        current_resume = config.current_resume
         # Define the paths
         resume_folder = config.resume_folder
         os.makedirs(resume_folder, exist_ok=True)
@@ -202,7 +203,7 @@ class IndeedAutoApplyBot:
         self.browser = webdriver.Chrome(options=chrome_options)
         url = config.indeed_homepage_url
         self.browser.get(url)
-        time.sleep(random.uniform(1.5, 3.0))  # Random delay
+        time.sleep(random.uniform(2, 3.0))  # Random delay
 
         # Load or create the master CSV file
         self.master_csv = config.master_csv
@@ -225,12 +226,12 @@ class IndeedAutoApplyBot:
             if close_button.is_displayed():
                 # Send the Escape key to close popups
                 self.browser.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
-                print("Sent ESCAPE key to close popup.")
+                # print("Sent ESCAPE key to close popup.")
                 time.sleep(0.5)  # Wait briefly after sending escape key
 
                 # Send the Enter key if needed (in case a confirmation dialog appears)
                 self.browser.find_element(By.TAG_NAME, 'body').send_keys(Keys.ENTER)
-                print("Sent ENTER key to confirm closing popup.")
+                # print("Sent ENTER key to confirm closing popup.")
                 time.sleep(0.5)  # Wait briefly after sending enter key
 
 
@@ -316,7 +317,7 @@ class IndeedAutoApplyBot:
         """Extract the job ID from the Indeed job URL."""
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
-        job_id = query_params.get('jk', [None])[0]  # Extract the 'jk' parameter value
+        job_id = query_params.get(config.url_query_keword, [None])[0]  # Extract the 'jk' parameter value
         return job_id
 
     def click_reject_all_button(self):
@@ -352,159 +353,174 @@ class IndeedAutoApplyBot:
             page_count = 0  # Counter to track the number of pages processed
 
             while is_next_page and page_count < config.pagination_limit:
-                job_listings = self.browser.find_elements(By.CSS_SELECTOR, "ul.css-zu9cdh li")
+                job_listings = self.browser.find_elements(By.CSS_SELECTOR, config.job_listings_element)
+                if not job_listings:
+                    print("Could not find any job listings. Please check the 'job_listings_element' in config.py.")
+                    break  # Exit the pagination loop since there's nothing to process
 
                 for job in job_listings:
                     try:
-                        job_title_element = job.find_element(By.CSS_SELECTOR, "h2.jobTitle a")
+                        job_title_element = job.find_element(By.CSS_SELECTOR, config.job_title_element)
                         job_listing_url = job_title_element.get_attribute("href")
+                    except NoSuchElementException:
+                        print("Could not find the job title element. Modify config.py with the updated element.")
+                        continue
 
-                        job_id = self.extract_job_id(job_listing_url)
-                        if job_id is None or job_id in self.processed_jobs:
-                            print(f"Skipping already processed job ID: {job_id}")
-                            continue
+                    job_id = self.extract_job_id(job_listing_url)
+                    if job_id is None:
+                        print("Could not extract the job ID from the URL. Skipping this job.")
+                        continue
+                    if job_id in self.processed_jobs:
+                        print(f"Skipping already processed job ID: {job_id}")
+                        continue
 
-                        job_title = job_title_element.text
-                        company_name = job.find_element(By.CSS_SELECTOR, "span[data-testid='company-name']").text
-                        location = job.find_element(By.CSS_SELECTOR, "div[data-testid='text-location']").text
+                    job_title = job_title_element.text
 
-                        # Try clicking the job title element with retries
-                        if not self.try_click(job_title_element):
-                            print(f"Failed to click job title after multiple retries: {job_title}")
-                            continue
+                    try:
+                        company_name = job.find_element(By.CSS_SELECTOR, config.company_name_element).text
+                    except NoSuchElementException:
+                        print("Could not find the company name element. Modify config.py with the updated element.")
+                        continue
 
-                        time.sleep(random.uniform(2.0, 3.0))  # Random delay after clicking
+                    try:
+                        location = job.find_element(By.CSS_SELECTOR, config.location_element).text
+                    except NoSuchElementException:
+                        print("Could not find the location element. Modify config.py with the updated element.")
+                        continue
 
-                        job_description = self.browser.find_element(By.ID, "jobDescriptionText").text
+                    # Try clicking the job title element with retries
+                    if not self.try_click(job_title_element):
+                        print(f"Failed to click job title after multiple retries: {job_title}")
+                        continue
 
+                    time.sleep(random.uniform(2.0, 3.0))  # Random delay after clicking
+
+                    try:
+                        job_description = self.browser.find_element(By.ID, config.job_description_element).text
+                    except NoSuchElementException:
+                        print("Could not find the job description element. Modify config.py with the updated element.")
+                        continue
+
+                    # Extract the posting date
+                    try:
+                        date_element = job.find_element(By.CSS_SELECTOR, config.posted_date_element).text
+                        today = datetime.today()
+                        days_ago = [int(s) for s in date_element.split() if s.isdigit()]
+
+                        if len(days_ago) > 0:
+                            date_t = timedelta(days=days_ago[0])
+                            final_date = (today - date_t).strftime('%Y-%m-%d')
+                        elif "just posted" in date_element.lower():
+                            final_date = today.strftime('%Y-%m-%d')
+                        else:
+                            print(f"Failed to parse date: defaulting to today's date")
+                            final_date = today.strftime('%Y-%m-%d')
+
+                        posting_date = final_date
+                    except NoSuchElementException:
+                        print("Could not find the date element. Modify config.py with the updated element.")
+                        posting_date = "Not available"
+
+                    internal_apply_button_found = "No"  # Flag to track if the internal apply button is found
+                    apply_link = "Apply link not found"
+                    internal_apply_button = None  # Initialize variable
+
+                    # Try to find the internal apply button
+                    try:
+                        internal_apply_button = self.browser.find_element(By.ID, config.internal_apply_button_element)
+                        internal_apply_button_found = "Yes"
+                        apply_link = self.browser.current_url  # Assuming internal apply redirects to the current URL
+                    except NoSuchElementException:
+                        print("Could not find the internal apply button.")
+                        # Try to find the external apply button
                         try:
-                            # Extract the posting date
-                            date_element = job.find_element(By.CSS_SELECTOR,
-                                                            "div.job_seen_beacon span.css-qvloho.eu4oa1w0").text
-                            today = datetime.today()
-                            days_ago = [int(s) for s in date_element.split() if s.isdigit()]
-
-                            if len(days_ago) > 0:
-                                date_t = timedelta(days=days_ago[0])
-                                final_date = (today - date_t).strftime('%Y-%m-%d')
-                            elif "just posted" in date_element.lower():
-                                final_date = today.strftime('%Y-%m-%d')
-                            else:
-                                print(f"Failed to get date: defaulting to today's date")
-                                final_date = today.strftime('%Y-%m-%d')
-
-                            posting_date = final_date
+                            external_apply_button = self.browser.find_element(By.XPATH,
+                                                                              config.external_apply_button_element)
+                            apply_link = external_apply_button.get_attribute("href")
+                            if not apply_link:
+                                apply_link = "Apply link not available"
                         except NoSuchElementException:
-                            posting_date = "Not available"
-
-                        internal_apply_button_found = "No"  # Flag to track if the internal apply button is found
-                        apply_link = "Apply link not found"
-                        internal_apply_button = None  # Initialize variable
-
-                        try:
-                            # Try to find the internal apply button
-                            internal_apply_button = self.browser.find_element(By.ID, "indeedApplyButton")
-                            # Set flag to Yes since the internal button exists
-                            internal_apply_button_found = "Yes"
-                            apply_link = self.browser.current_url  # Assuming internal apply redirects to the current URL
-
-                        except NoSuchElementException:
+                            print("Could not find the external apply button using XPath.")
+                            # Try alternative CSS selector for external apply button
                             try:
-                                # Try to find the external apply button using corrected XPath
-                                external_apply_button = self.browser.find_element(By.XPATH,
-                                                                                  "//button[.//span[text()='Apply now']]")
+                                external_apply_button = self.browser.find_element(
+                                    By.CSS_SELECTOR, "div#applyButtonLinkContainer button"
+                                )
                                 apply_link = external_apply_button.get_attribute("href")
-
-                                # Check if the href attribute is found
                                 if not apply_link:
                                     apply_link = "Apply link not available"
-                                internal_apply_button_found = "No"
-
                             except NoSuchElementException:
-                                try:
-                                    # Try alternative CSS selector for external apply button
-                                    external_apply_button = self.browser.find_element(By.CSS_SELECTOR,
-                                                                                      "div#applyButtonLinkContainer button")
-                                    apply_link = external_apply_button.get_attribute("href")
+                                print("Could not find the external apply button using CSS selector.")
+                                apply_link = "Apply link not found"
 
-                                    if not apply_link:
-                                        apply_link = "Apply link not available"
-                                    internal_apply_button_found = "No"
+                    data = ask_chatgpt(job_description)
+                    suitability = parse_gpt_response(data)
 
-                                except NoSuchElementException:
-                                    # Apply link not found
-                                    apply_link = "Apply link not found"
-                                    internal_apply_button_found = "No"
+                    date_recorded = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-                        data = ask_chatgpt(job_description)
-                        suitability = parse_gpt_response(data)
+                    resume_path = None
+                    gpt_answer = None
+                    application_status = None
+                    if suitability == "Yes":
+                        update_resume_with_json(data, template_path)
 
-                        date_recorded = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-                        resume_path = None
-                        gpt_answer = None
-                        application_status = None
-                        if suitability == "Yes":
-                            update_resume_with_json(data, template_path)
-
-                            if internal_apply_button_found == "Yes" and config.auto_apply.lower() == "yes":
-                                if internal_apply_button is not None:
-                                    gpt_answer, application_status = apply_for_job(self.browser, internal_apply_button,
-                                                                                   resume_file_name=config.current_resume)
-                                else:
-                                    # Handle the case where internal_apply_button is None
-                                    print("Internal apply button not found, cannot proceed with application.")
-                                    gpt_answer = None
-                                    application_status = "Failed to apply - internal apply button not found"
+                        if internal_apply_button_found == "Yes" and config.auto_apply.lower() == "yes":
+                            if internal_apply_button is not None:
+                                gpt_answer, application_status = apply_for_job(
+                                    self.browser, internal_apply_button, resume_file_name=config.current_resume
+                                )
                             else:
+                                print("Internal apply button is None, cannot proceed with application.")
                                 gpt_answer = None
-                                application_status = "Not applied"
+                                application_status = "Failed to apply - internal apply button not found"
+                        else:
+                            gpt_answer = None
+                            application_status = "Not applied"
 
-                            resume_path = move_resume(job_title, job_id)
-                            html_path = move_html(job_title, job_id)
+                        resume_path = move_resume(job_title, job_id)
+                        html_path = move_html(job_title, job_id)
 
-                        with open(self.master_csv, mode='a', newline='', encoding='utf-8') as master_file:
-                            master_writer = csv.writer(master_file)
-                            master_writer.writerow(
-                                [job_title, company_name, location, job_description, posting_date, apply_link,
-                                 job_listing_url, job_id, date_recorded, internal_apply_button_found, resume_path,
-                                 gpt_answer, suitability, application_status])
+                    with open(self.master_csv, mode='a', newline='', encoding='utf-8') as master_file:
+                        master_writer = csv.writer(master_file)
+                        master_writer.writerow(
+                            [
+                                job_title, company_name, location, job_description, posting_date, apply_link,
+                                job_listing_url, job_id, date_recorded, internal_apply_button_found, resume_path,
+                                gpt_answer, suitability, application_status
+                            ]
+                        )
 
-                        with open(self.latest_csv, mode='a', newline='', encoding='utf-8') as latest_file:
-                            latest_writer = csv.writer(latest_file)
-                            latest_writer.writerow(
-                                [job_title, company_name, location, job_description, posting_date, apply_link,
-                                 job_listing_url, job_id, date_recorded, internal_apply_button_found, resume_path,
-                                 gpt_answer, suitability, application_status])
+                    with open(self.latest_csv, mode='a', newline='', encoding='utf-8') as latest_file:
+                        latest_writer = csv.writer(latest_file)
+                        latest_writer.writerow(
+                            [
+                                job_title, company_name, location, job_description, posting_date, apply_link,
+                                job_listing_url, job_id, date_recorded, internal_apply_button_found, resume_path,
+                                gpt_answer, suitability, application_status
+                            ]
+                        )
 
-                        self.processed_jobs.add(job_id)
-
-                    except NoSuchElementException:
-                        pass
-                    except ElementClickInterceptedException:
-                        print("Click was intercepted. Trying to scroll into view and click again.")
-                        self.browser.execute_script("arguments[0].scrollIntoView({block: 'center'});",
-                                                    job_title_element)
-                        ActionChains(self.browser).move_to_element(job_title_element).click().perform()
-                        time.sleep(random.uniform(2.0, 3.0))
+                    self.processed_jobs.add(job_id)
 
                     # Close any popup that might appear
                     self.close_popups()
 
                 page_count += 1
 
-                if page_count < 3:
+                if page_count < config.pagination_limit:
                     try:
                         next_page_button = self.browser.find_element(By.XPATH,
-                                                                     '//a[@data-testid="pagination-page-next"]')
-                        self.browser.execute_script("arguments[0].scrollIntoView({block: 'center'});",
-                                                    next_page_button)
+                                                                     config.next_page_element)
+                        self.browser.execute_script(
+                            "arguments[0].scrollIntoView({block: 'center'});", next_page_button
+                        )
                         ActionChains(self.browser).move_to_element(next_page_button).click().perform()
                         time.sleep(random.uniform(2.0, 3.0))  # Wait for the next page to load
                     except NoSuchElementException:
+                        print("Could not find the next page button. Check elements in config.py. Ending pagination.")
                         is_next_page = False  # If no next page, exit the loop
                 else:
-                    is_next_page = False  # Stop after 3 pages
+                    is_next_page = False  # Stop after reaching the pagination limit
 
 
 if __name__ == "__main__":

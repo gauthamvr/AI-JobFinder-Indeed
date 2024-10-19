@@ -101,10 +101,87 @@ Please indicate your professional registration status: Not required for this pos
 
 
 
+# Experimental options for chrome
+chrome_experimental_options = {
+    "disable-blink-features": "AutomationControlled",
+    "detach": True
+}
 
+# The number of pages it should go in for each job keyword
+pagination_limit = 3
+
+# The name of the master csv file which contains all the job listings so far and the lastes one
+master_csv = "master_job_listings.csv"
+latest_csv = "latest_job_listings.csv"
+
+
+
+# The folder name where the generated resumes for each job will be stored
+resume_folder = "Resumes"
+
+# The folder where the submission html files are stored
+submissions_folder = "Submissions"
+
+# Place holders pointing to the profile and skills section in your own resume template.docx
+placeholders = {
+    "profile_placeholder": "<*profile*>",
+    "skills_placeholder": "<*skills*>"
+}
+
+
+# Set yes to modify. The font in which the profile and skills section will be modified. Modify based on your template resume font
+modify_font = "Yes"
+font = 'Times New Roman'
+size = 12
+bold = False
+
+# Gpt model being used to process
+gpt_model = "gpt-4o-mini"
+
+# The name of your own resume which contains place holders "<*profile*>" and "<*skills*>"
 template_path = "Template.docx"
-current_resume = "Current - resume.docx"
 
+# Rename to set the name of resume that is being uploaded each time
+current_resume = "Resume.docx"
+
+
+
+
+#Indeed page elements:
+# The element which contains all listings of job in the page
+job_listings_element = "div.cardOutline.tapItem"
+
+# The elmement identifying title of the each job element
+job_title_element = "h2.jobTitle a"
+
+# The elmement identifying company name
+company_name_element = "span[data-testid='company-name']"
+
+# The elmement identifying location of the job
+location_element = "div[data-testid='text-location']"
+
+# The elmement identifying description of the job element
+job_description_element = "jobDescriptionText"
+
+# The elmement identifying date of job posting
+posted_date_element = "span[data-testid='myJobsStateDate']"
+
+# The elmement identifying internal apply button
+internal_apply_button_element = "indeedApplyButton"
+
+# The elmement identifying external apply button
+external_apply_button_element = "//button[.//span[text()='Apply now']]"
+
+# The element identifying next page button
+next_page_element = '//a[@data-testid="pagination-page-next"]'
+
+# The elmement used to identify the job id from the url
+url_query_keword = 'jk'
+
+
+
+
+# Keywords for searching jobs
 job_search_keywords = [
     "Full-Stack Developer", "Software Engineer", "React Developer",
     "Node.js Developer", "Mobile App Developer", "Flutter Developer",
@@ -112,28 +189,5 @@ job_search_keywords = [
 
 ]
 
-pagination_limit = 3
-
-master_csv = "master_job_listings.csv"
-latest_csv = "latest_job_listings.csv"
-
-
-chrome_experimental_options = {
-    "disable-blink-features": "AutomationControlled",
-    "detach": True
-}
-
-resume_folder = "Resumes"
-
-placeholders = {
-    "profile_placeholder": "<*profile*>",
-    "skills_placeholder": "<*skills*>"
-}
-
-# URL for Indeed homepage
+# URL used to load the homepage of indeed. Modify based on your country
 indeed_homepage_url = "https://uk.indeed.com/?from=gnav-homepage&from=gnav-util-homepage"
-
-# Replace text format
-font = 'Times New Roman'
-size = 12
-bold = False
