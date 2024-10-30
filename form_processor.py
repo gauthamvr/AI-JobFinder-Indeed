@@ -15,20 +15,9 @@ from selenium.webdriver.common.by import By
 import shutil
 import config
 
-# # Set up Chrome options to connect to the existing session
-# chrome_options = Options()
-# chrome_options.add_experimental_option("debuggerAddress", "localhost:9222")
-#
-# # Create a new driver instance that connects to the running browser
-# driver = webdriver.Chrome(options=chrome_options)
-
 # Define your OpenAI API key here
 
 OPENAI_API_KEY = config.api_key
-
-
-
-
 
 def apply_for_job(browser, internal_apply_button, resume_file_name):
     try:
@@ -108,8 +97,16 @@ def apply_for_job(browser, internal_apply_button, resume_file_name):
 
             if 'resume' not in current_url:
                 print("Unable to reach a URL containing 'resume' after maximum attempts.")
-                # Handle this case as needed; for example, return a failure
-                return None, "Failed"
+                # Before failing, check if we can proceed by clicking 'Review your application' button
+                review_clicked = click_review_your_application_button(browser)
+                if review_clicked:
+                    # Proceed to next steps
+                    current_url = browser.current_url
+                    previous_url = current_url
+                    print("After clicking 'Review your application', proceeding to next steps.")
+                else:
+                    # Handle this case as needed; for example, return a failure
+                    return None, "Failed"
 
         # Initialize gpt_answer and application_status
         gpt_answer = None
@@ -181,7 +178,7 @@ def apply_for_job(browser, internal_apply_button, resume_file_name):
             print(f"Element not found in Step 9: {e}")
             # Continue to next step
 
-        # Step 10: Process forms (assuming process_forms is defined elsewhere)
+        # Step 10: Process forms
         try:
             gpt_answer, application_status = process_forms(browser)
         except Exception as e:
@@ -200,13 +197,37 @@ def apply_for_job(browser, internal_apply_button, resume_file_name):
 
         return gpt_answer, application_status
 
-
     except Exception as e:
         print(f"An error occurred: {e}")
         return None, "Failed"
 
-
-
+def click_review_your_application_button(browser):
+    current_url = browser.current_url
+    if 'documents' in current_url.lower():
+        print("URL contains 'documents'. Attempting to click 'Review your application' button.")
+        review_buttons = browser.find_elements(By.XPATH, "//button//span[text()='Review your application']")
+        if review_buttons:
+            previous_url = current_url
+            for button in review_buttons:
+                try:
+                    smooth_scroll_to_element(browser, button)
+                    ActionChains(browser).move_to_element(button).click().perform()
+                    print("Review your application button clicked.")
+                    time.sleep(random.uniform(2.0, 3.0))
+                    # Check if URL has changed
+                    current_url = browser.current_url
+                    if current_url != previous_url:
+                        print("URL has changed after clicking 'Review your application' button.")
+                        return True
+                    else:
+                        print("URL did not change after clicking 'Review your application' button.")
+                except Exception as e:
+                    print(f"Could not click 'Review your application' button: {e}")
+        else:
+            print("No 'Review your application' buttons found on the page.")
+    else:
+        print("URL does not contain 'documents'.")
+    return False
 
 def human_like_delay(min_delay=0.5, max_delay=2.0):
     time.sleep(random.uniform(min_delay, max_delay))
@@ -219,8 +240,6 @@ def human_like_typing(element, text):
 def smooth_scroll_to_element(driver, element):
     driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element)
     human_like_delay(1, 2)  # Wait for the scroll to complete
-
-
 
 # Existing functions, updated to use human-like behavior
 
@@ -254,7 +273,6 @@ def extract_headings(driver):
             continue
 
     return headings
-
 
 def detect_form_fields(driver):
     # Extract the headings first
@@ -358,7 +376,6 @@ def detect_form_fields(driver):
 
     print(f"Detected form fields with headings: {form_fields}")
     return form_fields
-
 
 def send_to_openai(profile_description, form_fields):
     try:
@@ -507,7 +524,7 @@ def autofill_fields(driver, form_fields, response_data):
                 except Exception as e:
                     print(f"Failed to fill field {field_id}: {e}")
 
-        # Handle radio button groups (unchanged from the previous implementation)
+        # Handle radio button groups
         elif 'group' in field and 'options' in field:
             group_name = field['group']
             options = field['options']
@@ -529,7 +546,6 @@ def autofill_fields(driver, form_fields, response_data):
                     except Exception as e:
                         print(f"Failed to select radio button {option_id}: {e}")
                     break  # Stop after finding the matching radio button
-
 
 def extract_question_answer_pairs(form_fields, response_data):
     # Create a dictionary to map the form field ID to its label
@@ -579,7 +595,7 @@ def process_forms(driver):
                 return accumulated_question_answer_pairs, application_status
 
             # If the current URL contains "question" and hasn't been processed yet
-            if ("question" in current_url.lower() or "document" in current_url.lower())  and current_url not in processed_urls:
+            if ("question" in current_url.lower()) and current_url not in processed_urls:
                 print("The URL contains 'question'. Detecting form fields and filling them.")
                 form_fields = detect_form_fields(driver)
                 form_fields_storage.append(form_fields)
@@ -607,6 +623,24 @@ def process_forms(driver):
                 # Reset retry attempts after successfully processing the question page
                 retry_attempts = 0
 
+            elif ("documents" in current_url.lower()) and current_url not in processed_urls:
+                print("The URL contains 'documents'. Attempting to click 'Review your application' button.")
+                review_clicked = click_review_your_application_button(driver)
+                if review_clicked:
+                    print("Review your application button clicked successfully.")
+                    # Reset retry attempts after successfully clicking the button
+                    retry_attempts = 0
+                    processed_urls.add(current_url)
+                    continue  # Continue to the next iteration
+                else:
+                    print("Failed to click 'Review your application' button.")
+                    retry_attempts += 1
+                    if retry_attempts >= max_continue_attempts:
+                        print("Reached maximum retry limit. Marking as Failed.")
+                        application_status = "Failed"
+                        return accumulated_question_answer_pairs, application_status
+                    continue  # Retry
+
             # Now, try to find and click 'Continue' buttons on the page
             continue_buttons = driver.find_elements(By.XPATH, "//button//span[text()='Continue']")
             continue_clicked = False
@@ -632,7 +666,7 @@ def process_forms(driver):
                             break
                         else:
                             # If URL hasn't changed and it's on a question page, retry OpenAI once
-                            if ("question" in current_url.lower() or "document" in current_url.lower())  and not openai_retry_done:
+                            if ("question" in current_url.lower()) and not openai_retry_done:
                                 print("URL has not changed. Retrying OpenAI once.")
                                 openai_retry_done = True  # Only retry once
                                 form_fields = detect_form_fields(driver)
@@ -658,13 +692,7 @@ def process_forms(driver):
             if not continue_buttons:
                 print("No 'Continue' button found. Checking for review page...")
 
-                # # If no 'Continue' button is found, check if the current URL contains 'review'
-                # if "review" in current_url.lower():
-                #     application_status = "Success"
-                #     print(f"Application status: {application_status}")  # Ensure status is printed
-                #     return accumulated_question_answer_pairs, application_status
-
-                    # Check for 'Continue applying' or 'Review your application' button before marking as failed
+                # Check for 'Continue applying' or 'Review your application' button before marking as failed
                 alternate_buttons = driver.find_elements(By.XPATH,
                                                          "//button//span[text()='Continue applying' or text()='Review your application']")
 
@@ -705,8 +733,8 @@ def process_forms(driver):
             time.sleep(1)
 
             # If the new URL contains "question", process the form again, but ensure it hasn't been processed before
-            if ("question" in current_url.lower() or "document" in current_url.lower())  and current_url not in processed_urls:
-                print("New 'question' page detected. Processing again...")
+            if ("question" in current_url.lower() or "documents" in current_url.lower()) and current_url not in processed_urls:
+                print("New page detected. Processing again...")
                 continue  # Restart the loop to process this new question page
 
             # If the new URL contains "review", set the application status as success
@@ -737,7 +765,6 @@ def process_forms(driver):
                                 application_status = "Success"
                                 print(f"Application status: {application_status}")  # Ensure status is printed
                                 return accumulated_question_answer_pairs, application_status
-                                break
                             else:
                                 print("URL has not changed after clicking the button, retrying.")
                                 time.sleep(7)
@@ -748,8 +775,7 @@ def process_forms(driver):
 
                     continue  # Skip to next iteration after clicking 'Continue applying' or 'Review your application'
                 else:
-                    "Submission turned off or No submit button"
-
+                    print("Submission turned off or No submit button")
 
         except NoSuchElementException:
             print("No 'Continue' buttons found on the page.")
@@ -780,9 +806,8 @@ def move_html(job_title: str, job_id: str):
     except:
         print("Move error or already file moved")
         return None
-#
-    # return form_fields_storage
 
+    # return form_fields_storage
 
 # if __name__ == "__main__":
 #     process_forms(driver)

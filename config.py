@@ -167,10 +167,12 @@ job_description_element = "jobDescriptionText"
 posted_date_element = "span[data-testid='myJobsStateDate']"
 
 # The elmement identifying internal apply button
-internal_apply_button_element = "indeedApplyButton"
+internal_apply_button_element = "//button[.//span[contains(text(), 'Apply now')] and not(@aria-haspopup='dialog')]"
+    # "indeedApplyButton"
 
 # The elmement identifying external apply button
-external_apply_button_element = "//button[.//span[text()='Apply now']]"
+external_apply_button_element = "//button[@aria-haspopup='dialog' and .//span[contains(text(), 'Apply now')]]"
+
 
 # The element identifying next page button
 next_page_element = '//a[@data-testid="pagination-page-next"]'

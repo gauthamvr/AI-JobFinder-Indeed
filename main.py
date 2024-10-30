@@ -427,7 +427,7 @@ class IndeedAutoApplyBot:
 
                     # Try to find the internal apply button
                     try:
-                        internal_apply_button = self.browser.find_element(By.ID, config.internal_apply_button_element)
+                        internal_apply_button = self.browser.find_element(By.XPATH, config.internal_apply_button_element)
                         internal_apply_button_found = "Yes"
                         apply_link = self.browser.current_url  # Assuming internal apply redirects to the current URL
                     except NoSuchElementException:
