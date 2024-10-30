@@ -1,16 +1,17 @@
 # AI Job finder using Indeed with ChatGPT Integration
 
-An Indeed scraper that integrates with ChatGPT to find suitable jobs based on your profile and preferences, modifies your profile and skills section of your resume to include relevant keywords from the job description/profile, and automates parts of the application process. 
+An Indeed scraper that integrates with ChatGPT to find suitable jobs based on your profile and preferences, modifies your profile and skills section of your resume to include relevant keywords from the job description/profile, and completely automates the application process. Completely automates the application process for jobs with internal application button.
 Tired of going through hundreds of jobs only to find that many are not suitable for you? You are at the right place. The code will analyze your profile and job descriptions to determine if you are a good fit for the role, and provides a curated list of jobs after going through the latest listing of jobs in Indeed. Automation of job application using AI in Indeed.
 
 ### Important Notes:
-- **Please use responsibly.**
+- **Please ensure to download the latest files to ensure that you have the latest page elements used by Indeed.**
+- **Although I update the code with new elements, Indeed frequently changes its page elements. If you encounter logs indicating that elements could not be found, inspect the page and modify config.py with the correct elements.**
 - **ChatGPT can make mistakes, so double-check important information.**
 - **The code has been written to mimic user behavior, which may make it appear slow**
 - **Make sure that the csv files and the previous chrome instance is closed before running**
 - **If no api key is provided, it will only scrape the listings into the csv**
 - **Run with chrome maximized (Recommended)**
-- **Indeed is known to change page elements frequently, if you find logs indicating could not find elements, modify the config.py with the correct elements by inspecting.**
+
 
 
 ## Applications
