@@ -59,6 +59,8 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 
 ## Installation 🔌
 
+### Video:
+
 [![Watch the video](https://img.youtube.com/vi/nLqj_ijwzCA/0.jpg)](https://youtu.be/nLqj_ijwzCA)
 
 ### Prerequisites:
