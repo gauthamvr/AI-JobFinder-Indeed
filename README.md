@@ -153,7 +153,7 @@ Feel free to contact me for any updates, requests, questions, or donations. Any 
 
 
 ## Buy me a coffee:
-Your support is greatly appreciated! Every contribution helps.
+Buy me a coffee?
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-donate-yellow)](https://buymeacoffee.com/gauthamvr)
 
