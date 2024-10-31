@@ -61,7 +61,7 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 
 ### Video:
 
-[![Watch the video](https://img.youtube.com/vi/nLqj_ijwzCA/0.jpg)](https://youtu.be/nLqj_ijwzCA)
+[![Watch the video](https://img.youtube.com/vi/kJJH2psXAcw/0.jpg)](https://youtu.be/kJJH2psXAcw)
 
 ### Prerequisites:
 - Ensure **Python** and **pip** are installed on your machine.
