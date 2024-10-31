@@ -3,6 +3,12 @@
 An Indeed scraper that integrates with ChatGPT to find suitable jobs based on your profile and preferences, modifies your profile and skills section of your resume to include relevant keywords from the job description/profile, and completely automates the application process. Completely automates the application process for jobs with internal application button.
 Tired of going through hundreds of jobs only to find that many are not suitable for you? You are at the right place. The code will analyze your profile and job descriptions to determine if you are a good fit for the role, and provides a curated list of jobs after going through the latest listing of jobs in Indeed. Automation of job application using AI in Indeed.
 
+
+### Video:
+
+[![Watch the video](https://img.youtube.com/vi/kJJH2psXAcw/0.jpg)](https://youtu.be/kJJH2psXAcw)
+
+
 ### Important Notes:
 - **Please ensure to download the latest files to ensure that you have the latest page elements used by Indeed.**
 - **Although I update the code with new elements, Indeed frequently changes its page elements. If you encounter logs indicating that elements could not be found, inspect the page and modify config.py with the correct elements.**
@@ -59,9 +65,6 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 
 ## Installation 🔌
 
-### Video:
-
-[![Watch the video](https://img.youtube.com/vi/kJJH2psXAcw/0.jpg)](https://youtu.be/kJJH2psXAcw)
 
 ### Prerequisites:
 - Ensure **Python** and **pip** are installed on your machine.
