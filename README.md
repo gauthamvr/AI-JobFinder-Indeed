@@ -17,6 +17,7 @@ Tired of going through hundreds of jobs only to find that many are not suitable 
 - **Make sure that the csv files and the previous chrome instance is closed before running**
 - **If no api key is provided, it will only scrape the listings into the csv**
 - **Run with chrome maximized (Recommended)**
+- **Tested only on Indeed - United Kingdom**
 
 
 
