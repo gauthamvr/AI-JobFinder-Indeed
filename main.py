@@ -16,15 +16,197 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException, \
-    MoveTargetOutOfBoundsException, TimeoutException
+    MoveTargetOutOfBoundsException, TimeoutException, StaleElementReferenceException
 from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from form_processor import apply_for_job  # Import the function
 from form_processor import move_html
+from selenium.webdriver.chrome.service import Service
+import sys
+import platform as py_platform
 import config
 
 template_path = config.template_path
+
+
+def get_chrome_version() -> str | None:
+    """
+    Returns the installed Chrome version string, e.g. '140.0.7339.128', or None if not found.
+    Windows: tries the default path; else falls back to 'chrome --version'.
+    Mac/Linux: runs 'google-chrome --version' or 'chrome --version'.
+    """
+    import subprocess, shutil
+
+    candidates = []
+    if sys.platform.startswith("win"):
+        candidates = [
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            shutil.which("chrome"),
+            shutil.which("google-chrome"),
+        ]
+    else:
+        candidates = [
+            shutil.which("google-chrome"),
+            shutil.which("chrome"),
+            shutil.which("chromium"),
+        ]
+
+    for p in candidates:
+        if not p:
+            continue
+        try:
+            out = subprocess.check_output([p, "--version"], stderr=subprocess.STDOUT, text=True).strip()
+            ver = next((tok for tok in out.split() if tok[0].isdigit()), None)
+            if ver:
+                return ver
+        except Exception:
+            pass
+    return None
+
+
+def platform_tag():
+    """
+    Returns (folder_tag, exe_name) for ChromeDriver by OS/arch.
+    """
+    sysname = sys.platform
+    machine = py_platform.machine().lower()
+
+    if sysname.startswith("win"):
+        return ("win64", "chromedriver.exe")
+    if sysname == "darwin":
+        if "arm" in machine or "aarch64" in machine:
+            return ("mac-arm64", "chromedriver")
+        else:
+            return ("mac-x64", "chromedriver")
+    return ("linux64", "chromedriver")
+
+
+def local_driver_path_for(chrome_version: str):
+    """
+    Returns the expected local driver path like ./drivers/<platform>/<major>/chromedriver[.exe]
+    """
+    major = chrome_version.split(".", 1)[0]
+    folder_tag, exe_name = platform_tag()
+    driver_dir = os.path.join(os.getcwd(), "drivers", folder_tag, major)
+    os.makedirs(driver_dir, exist_ok=True)
+    return os.path.join(driver_dir, exe_name), major
+
+
+def cache_downloaded_driver(src_path: str, major: str):
+    """
+    Copy a successfully-downloaded driver into the local cache folder so future runs work offline.
+    """
+    try:
+        folder_tag, exe_name = platform_tag()
+        dest_dir = os.path.join(os.getcwd(), "drivers", folder_tag, major)
+        os.makedirs(dest_dir, exist_ok=True)
+        dest_path = os.path.join(dest_dir, exe_name)
+        if os.path.abspath(src_path) != os.path.abspath(dest_path):
+            shutil.copyfile(src_path, dest_path)
+            print(f"[Driver] Cached driver -> {dest_path}")
+    except Exception as e:
+        print(f"[Driver] Could not cache driver: {e}")
+
+
+def apply_proxy_env_if_any():
+    """
+    If config has 'driver_download_proxy', apply it to environment so
+    Selenium Manager / webdriver-manager / autoinstaller can use it.
+    """
+    proxy = getattr(config, "driver_download_proxy", None)
+    if proxy:
+        os.environ.setdefault("HTTPS_PROXY", proxy)
+        os.environ.setdefault("HTTP_PROXY", proxy)
+        print(f"[Driver] Using proxy from config.driver_download_proxy")
+
+
+def build_chrome_driver(chrome_options: webdriver.ChromeOptions) -> webdriver.Chrome:
+    """
+    Order of strategies:
+      0) Use CHROMEDRIVER env var if set (explicit override)
+      0b) Use a locally cached driver: ./drivers/<platform>/<major>/chromedriver[.exe]
+      1) Selenium Manager (built into Selenium)
+      2) webdriver-manager (downloads and caches)
+      3) chromedriver-autoinstaller
+    - If (2) or (3) succeeds, we copy the driver into ./drivers/... for offline reuse.
+    """
+    chrome_ver = get_chrome_version()
+    if chrome_ver:
+        local_path, major = local_driver_path_for(chrome_ver)
+        print(f"[Driver] Detected Chrome {chrome_ver} (major {major})")
+    else:
+        local_path, major = (None, None)
+        print("[Driver] Could not detect Chrome version")
+
+    apply_proxy_env_if_any()
+
+    # 0) explicit env var override
+    env_path = os.environ.get("CHROMEDRIVER")
+    if env_path and os.path.exists(env_path):
+        print(f"[Driver] Using CHROMEDRIVER from env: {env_path}")
+        return webdriver.Chrome(service=Service(env_path), options=chrome_options)
+
+    # 0b) local offline cache
+    if local_path and os.path.exists(local_path):
+        print(f"[Driver] Using locally cached driver: {local_path}")
+        return webdriver.Chrome(service=Service(local_path), options=chrome_options)
+
+    # 1) Selenium Manager
+    try:
+        print("[Driver] Trying Selenium Manager (default)...")
+        drv = webdriver.Chrome(options=chrome_options)
+        return drv
+    except Exception as e1:
+        print(f"[Driver] Selenium Manager failed: {e1}")
+
+    # 2) webdriver-manager
+    try:
+        print("[Driver] Trying webdriver-manager fallback...")
+        from webdriver_manager.chrome import ChromeDriverManager
+        driver_path = ChromeDriverManager().install()
+        print(f"[Driver] webdriver-manager installed: {driver_path}")
+        drv = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
+        if major:
+            cache_downloaded_driver(driver_path, major)
+        return drv
+    except Exception as e2:
+        print(f"[Driver] webdriver-manager failed: {e2}")
+
+    # 3) chromedriver-autoinstaller
+    try:
+        print("[Driver] Trying chromedriver-autoinstaller fallback...")
+        import chromedriver_autoinstaller
+        driver_path = chromedriver_autoinstaller.install(cwd=True)
+        print(f"[Driver] autoinstaller installed: {driver_path}")
+        drv = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
+        if major:
+            cache_downloaded_driver(driver_path, major)
+        return drv
+    except Exception as e3:
+        print(f"[Driver] chromedriver-autoinstaller failed: {e3}")
+
+    # Manual instructions if all strategies fail
+    if chrome_ver:
+        folder_tag, exe_name = platform_tag()
+        manual_url = f"https://storage.googleapis.com/chrome-for-testing-public/{chrome_ver}/{folder_tag}/chromedriver-{folder_tag}.zip"
+        msg = (
+            "Could not obtain a compatible ChromeDriver with any strategy.\n"
+            "Your network seems to block downloads. Options:\n"
+            f"  • Manually download the driver zip for your Chrome version from:\n"
+            f"    {manual_url}\n"
+            f"  • Unzip and place '{exe_name}' at:\n"
+            f"    {local_path}\n"
+            "  • Or set config.driver_download_proxy to your corporate proxy (https://user:pass@host:port),\n"
+            "    or set HTTPS_PROXY/HTTP_PROXY env vars, then re-run.\n"
+        )
+        raise RuntimeError(msg)
+
+    raise RuntimeError(
+        "Could not obtain a compatible ChromeDriver with any strategy, and Chrome version could not be detected.\n"
+        "Please ensure you have Chrome installed, or provide CHROMEDRIVER env var to a local driver."
+    )
 
 
 def extract_json_from_text(text: str) -> str:
@@ -40,63 +222,121 @@ def extract_json_from_text(text: str) -> str:
     except re.error as e:
         print(f"Regex error: {e}")
         return None
+    
+def _extract_openai_output_text(resp_json: dict) -> str:
+    """
+    Get the plain text answer from a Responses API JSON.
+    Prefer 'output_text'; if it's empty/missing, fall back to
+    concatenating any content blocks of type 'output_text' in 'output'.
+    """
+    # Primary (when present)
+    txt = (resp_json.get("output_text") or "").strip()
+    if txt:
+        return txt
+
+    # Fallback: walk the 'output' array
+    parts = []
+    for item in resp_json.get("output", []):
+        if item.get("type") == "message":
+            for c in item.get("content", []):
+                if c.get("type") == "output_text":
+                    t = c.get("text", "")
+                    if t:
+                        parts.append(t)
+    return "\n".join(parts).strip()
+
 
 
 def ask_chatgpt(job_description: str) -> dict:
-    """Send the job description and profile to GPT and get a structured response."""
+    """Call OpenAI Responses API and return ONLY the JSON object we asked for, with simple prints."""
     try:
+        if not getattr(config, "api_key", None):
+            print("[GPT] Missing API key.")
+            return {"error": "Missing API key", "message": "Set config.api_key or OPENAI_API_KEY."}
+
         headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {config.api_key}'
+            "Authorization": f"Bearer {config.api_key}",
+            "Content-Type": "application/json",
         }
 
-        data = {
-            "model": config.gpt_model,  # Replace with the model you have access to
-            "messages": [
-                {"role": "system",
-                 "content": "You are a helpful assistant that determines the suitability of my profile with the job description."},
-                {
-                    "role": "user",
-                    "content": f"""
-                    Given the following profile: {config.profile}
-                    And the following job description:
-                    {job_description}
+        system = "You decide fit and reply ONLY with valid JSON. No prose."
+        user = (
+            f"Profile:\n{config.profile}\n\n"
+            f"Job description:\n{job_description}\n\n"
+            "If not a match, return exactly: {\"suitable\":\"No\"}.\n"
+            "If a match, return exactly: "
+            "{\"suitable\":\"Yes\",\"profile\":\"...\",\"skills\":\"...\"}.\n"
+            "Keep 'profile' and 'skills' concise."
+        )
 
-                    Do you think I am a suitable match for this job? 
-                    If No, respond with a structured JSON containing "suitable":"No". Strictly follow the schema.  Do not provide any other words "", json, or comma or anything other than this.
-                    If Yes, 
-                    Based on the job description  and profile write a small profile section for a cv. Make sure to include relevant keywords so that it will get detected by ATS.
-                    Based on the job description and profile write a skill section for a cv. Make sure to include relevant skills so that the cv will get detected by ATS.
-                    Respond with a structured JSON containing "suitable":"Yes", "profile":"", "skills":"".
-                    Output only the json schema.  Do not provide any other words "", json, or comma or anything other than this.
-                    """
-                }
+        payload = {
+            "model": config.gpt_model,  # e.g. "gpt-5-mini"
+            "input": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
             ],
-            "max_tokens": 1200,
-            "n": 1,
-            "temperature": 1.0
+            # JSON mode for Responses API
+            "text": {"format": {"type": "json_object"}, "verbosity": "low"},
+            "reasoning": {"effort": "low"},
+          
+            "max_output_tokens": 600,
         }
 
-        response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, data=json.dumps(data),
-                                 timeout=10)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        message = response.json()['choices'][0]['message']['content'].strip()
-        # print(message)
-        # Extract JSON from the message
-        json_string = extract_json_from_text(message)
-        if not json_string:
-            return {"error": "No JSON found", "message": message}
+        resp = requests.post(
+            "https://api.openai.com/v1/responses",
+            headers=headers,
+            json=payload,
+            timeout=60
+        )
+
+        print(f"[GPT] HTTP {resp.status_code}")
+        if not resp.ok:
+            print(f"[GPT] Body: {resp.text}")
+            return {"error": "HTTP error", "message": resp.text}
+
+        j = resp.json()
+        print(f"[GPT] model={j.get('model')} status={j.get('status')} usage={j.get('usage')}")
+
+        # Extract text: prefer 'output_text', else collect from 'output' blocks
+        text = (j.get("output_text") or "").strip()
+        if not text:
+            parts = []
+            for item in j.get("output", []):
+                if item.get("type") == "message":
+                    for c in item.get("content", []):
+                        if c.get("type") == "output_text":
+                            t = c.get("text", "")
+                            if t:
+                                parts.append(t)
+            text = "\n".join(parts).strip()
+
+        print(f"[GPT] raw_text: {text}")
+
+        if not text:
+            print("[GPT] Empty output_text.")
+            return {"error": "Empty output", "message": j}
+
         try:
-            # Attempt to parse the JSON string
-            data = json.loads(json_string)
-            # print(data)
-            return data
+            parsed = json.loads(text)
+        except json.JSONDecodeError as e:
+            print(f"[GPT] JSON decode failed: {e}")
+            return {"error": "JSON decode error", "message": text}
 
-        except json.JSONDecodeError:
-            return {"error": "JSON parsing error", "message": json_string}
+        print(f"[GPT] parsed: {parsed}")
+        return parsed
 
-    except requests.exceptions.RequestException as e:
+    except requests.Timeout:
+        print("[GPT] Request timeout.")
+        return {"error": "Request timeout", "message": "OpenAI request timed out"}
+    except Exception as e:
+        print(f"[GPT] Exception: {e}")
         return {"error": "Request error", "message": str(e)}
+
+
+
+
+
+
 
 
 def update_resume_with_json(data: dict, template_path: str):
@@ -164,18 +404,22 @@ def move_resume(job_title: str, job_id: str):
 
 
 def parse_gpt_response(data: dict) -> str:
-    """Extract the 'suitable' value from the GPT response."""
-    try:
-        suitable_value = data["suitable"]
-        print("Is it suitable?", suitable_value)
-        return suitable_value
-    except KeyError:
-        return "API key Error"
+    """
+    Return 'Yes' or 'No'. Print the normalization so you can see the decision.
+    """
+    if isinstance(data, dict) and data.get("error"):
+        print(f"[GPT] treating as No due to error: {data.get('message')}")
+        return "No"
+
+    raw = data.get("suitable", "")
+    norm = str(raw).strip().lower()
+    decision = "Yes" if norm in {"yes", "y", "true", "1"} else "No"
+    print(f"[GPT] suitability raw={raw!r} norm={norm!r} -> {decision}")
+    return decision
 
 
-# Path to the user profile directory
-# user_profile = "C:/Users/user/AppData/Local/Google/Chrome/User Data/Profile 2"
-# chrome_options.add_argument(f"user-data-dir={user_profile}")
+
+
 
 
 class IndeedAutoApplyBot:
@@ -200,7 +444,7 @@ class IndeedAutoApplyBot:
         chrome_options.add_experimental_option("detach", True)
 
         # Initialize the browser with the specified options
-        self.browser = webdriver.Chrome(options=chrome_options)
+        self.browser = build_chrome_driver(chrome_options)
         url = config.indeed_homepage_url
         self.browser.get(url)
         time.sleep(random.uniform(2, 3.0))  # Random delay
@@ -226,19 +470,100 @@ class IndeedAutoApplyBot:
             if close_button.is_displayed():
                 # Send the Escape key to close popups
                 self.browser.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
-                # print("Sent ESCAPE key to close popup.")
-                time.sleep(0.5)  # Wait briefly after sending escape key
-
+                time.sleep(0.5)
                 # Send the Enter key if needed (in case a confirmation dialog appears)
                 self.browser.find_element(By.TAG_NAME, 'body').send_keys(Keys.ENTER)
-                # print("Sent ENTER key to confirm closing popup.")
-                time.sleep(0.5)  # Wait briefly after sending enter key
-
-
+                time.sleep(0.5)
         except NoSuchElementException:
             pass
         except Exception as e:
             print(f"Error while sending keys to close popup: {e}")
+
+    def simulate_typing(self, locator, text, per_char=True):
+        """
+        Types into an element found by `locator` (e.g., (By.NAME, "q")).
+        Re-finds the element if it goes stale while typing.
+        """
+        wait = WebDriverWait(self.browser, 15)
+        retries = 3
+        for attempt in range(1, retries + 1):
+            try:
+                el = wait.until(EC.element_to_be_clickable(locator))
+                # Focus & robust clear
+                el.click()
+                time.sleep(random.uniform(0.2, 0.5))
+                el.send_keys(Keys.CONTROL, 'a')
+                el.send_keys(Keys.DELETE)
+                time.sleep(random.uniform(0.1, 0.3))
+                # Type
+                if per_char:
+                    for ch in text:
+                        el.send_keys(ch)
+                        time.sleep(random.uniform(0.03, 0.12))
+                else:
+                    el.send_keys(text)
+                return
+            except StaleElementReferenceException:
+                print(f"Search element went stale; retrying ({attempt}/{retries})...")
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"Typing failed (attempt {attempt}/{retries}): {e}")
+                time.sleep(0.8)
+        raise RuntimeError("Could not type into the search box after multiple attempts.")
+
+    def find_job(self, job_search_keyword: str) -> None:
+        """Search for a job with the specified keyword (stale-safe)."""
+        # Close any cookie/consent popups first to avoid DOM reshuffles
+        self.close_popups()
+
+        # 1) Wait for the search input and type (stale-safe)
+        what_locator = (By.NAME, "q")
+        self.simulate_typing(what_locator, job_search_keyword, per_char=True)
+
+        # 2) Submit the form: ENTER first (most reliable), then button as fallback
+        submitted = False
+        try:
+            el = WebDriverWait(self.browser, 10).until(EC.element_to_be_clickable(what_locator))
+            el.send_keys(Keys.ENTER)
+            submitted = True
+        except Exception as e:
+            print(f"ENTER submit failed: {e}")
+
+        if not submitted:
+            # Fallback: click the "Find jobs" button by text; support nested span/button structures
+            try:
+                find_btn = WebDriverWait(self.browser, 10).until(
+                    EC.element_to_be_clickable(
+                        (By.XPATH, "//button[contains(., 'Find jobs') or .//span[contains(., 'Find jobs')]]")
+                    )
+                )
+                self.browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", find_btn)
+                ActionChains(self.browser).move_to_element(find_btn).click().perform()
+                submitted = True
+            except Exception as e:
+                print(f"Find button click fallback failed: {e}")
+
+        time.sleep(random.uniform(1.5, 3.0))
+        self.close_popups()
+
+        # 3) Wait for results to be present (don’t hard-fail; just try)
+        try:
+            WebDriverWait(self.browser, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, config.job_listings_element))
+            )
+        except Exception:
+            print("Results not detected yet; continuing anyway.")
+
+        # 4) Optional: try opening the date filter if available
+        try:
+            date_btn = WebDriverWait(self.browser, 5).until(
+                EC.element_to_be_clickable((By.ID, "dateLabel"))
+            )
+            self.browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", date_btn)
+            ActionChains(self.browser).move_to_element(date_btn).click().perform()
+            time.sleep(random.uniform(1.0, 2.0))
+        except Exception:
+            print("Date sort error")
 
     def try_click(self, element, retries=3):
         """Try to click an element, handle MoveTargetOutOfBoundsException by retrying after closing popups."""
@@ -278,40 +603,6 @@ class IndeedAutoApplyBot:
             writer.writerow(["Job Title", "Company Name", "Location", "Job Description", "Posting Date", "Apply Link",
                              "Job Listing URL", "Job ID", "Date Recorded", "Internal apply", "Resume path",
                              "AI answer", "Suitability", "Application status"])
-
-    def simulate_typing(self, element, text):
-        """Simulate human-like typing in an input field."""
-        for char in text:
-            element.send_keys(char)
-            time.sleep(random.uniform(0.05, 0.2))  # Random delay between keystrokes
-
-    def find_job(self, job_search_keyword: str) -> None:
-        """Search for a job with the specified keyword."""
-        query_input = self.browser.find_element(By.NAME, value="q")
-        query_input.clear()  # Clear the previous keyword
-
-        self.simulate_typing(query_input, job_search_keyword)
-        time.sleep(random.uniform(0.5, 1.5))
-
-        clear_btn = self.browser.find_element(By.XPATH,
-                                              value='//*[@id="jobsearch"]/div/div[1]/div[1]/div/div/span/span[2]')
-        ActionChains(self.browser).move_to_element(clear_btn).click().perform()
-        time.sleep(random.uniform(0.5, 1.5))
-
-        self.simulate_typing(query_input, job_search_keyword)
-        time.sleep(random.uniform(0.5, 1.5))
-
-        find_btn = self.browser.find_element(By.XPATH, "//button[contains(text(), 'Find jobs')]")
-        ActionChains(self.browser).move_to_element(find_btn).click().perform()
-        time.sleep(random.uniform(1.5, 3.0))  # Random delay
-
-        try:
-            date_btn = self.browser.find_element(By.XPATH, value='//*[@id="dateLabel"]')
-            ActionChains(self.browser).move_to_element(date_btn).click().perform()
-            time.sleep(random.uniform(1.5, 3.0))  # Random delay
-
-        except NoSuchElementException:
-            print("Date sort error")
 
     def extract_job_id(self, url):
         """Extract the job ID from the Indeed job URL."""
@@ -427,6 +718,7 @@ class IndeedAutoApplyBot:
 
                     # Try to find the internal apply button
                     try:
+                        time.sleep(random.uniform(2.0, 3.0))
                         internal_apply_button = self.browser.find_element(By.XPATH, config.internal_apply_button_element)
                         internal_apply_button_found = "Yes"
                         apply_link = self.browser.current_url  # Assuming internal apply redirects to the current URL
@@ -455,13 +747,14 @@ class IndeedAutoApplyBot:
 
                     data = ask_chatgpt(job_description)
                     suitability = parse_gpt_response(data)
+                    print(suitability)
 
                     date_recorded = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
                     resume_path = None
                     gpt_answer = None
                     application_status = None
-                    if suitability == "Yes":
+                    if suitability.strip().lower() == "yes":
                         update_resume_with_json(data, template_path)
 
                         if internal_apply_button_found == "Yes" and config.auto_apply.lower() == "yes":
@@ -530,6 +823,3 @@ if __name__ == "__main__":
     JOB_SEARCH = config.job_search_keywords
     bot = IndeedAutoApplyBot()
     bot.scrape_job_listings(JOB_SEARCH)
-
-
-
