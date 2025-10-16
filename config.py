@@ -99,7 +99,13 @@ Please indicate your professional registration status: Not required for this pos
 
 
 
+# Keywords for searching jobs
+job_search_keywords = [
+    "Full-Stack Developer", "Software Engineer", "React Developer",
+    "Node.js Developer", "Mobile App Developer", "Flutter Developer",
+    "Cloud Engineer", "DevOps Engineer", "AWS Specialist", "Agile Developer"
 
+]
 
 # Experimental options for chrome
 chrome_experimental_options = {
@@ -123,20 +129,26 @@ resume_folder = "Resumes"
 submissions_folder = "Submissions"
 
 # Place holders pointing to the profile and skills section in your own resume template.docx
-placeholders = {
-    "profile_placeholder": "<*profile*>",
-    "skills_placeholder": "<*skills*>"
-}
 
+profile_placeholder = "<*profile*>"
+skills_placeholder = "<*skills*>"
+
+
+# URL used to load the homepage of indeed. Modify based on your country
+indeed_homepage_url = "https://uk.indeed.com/?from=gnav-homepage&from=gnav-util-homepage"
 
 # Set yes to modify. The font in which the profile and skills section will be modified. Modify based on your template resume font
 modify_font = "Yes"
-font = 'Times New Roman'
-size = 12
+font = 'Calibri (Body)'
+size = 11.5
 bold = False
 
+# Modify location, give the place holder to replace with the job location advertised
+modify_location = "Yes"
+location_placeholder = "Witham"
+
 # Gpt model being used to process
-gpt_model = "gpt-4o-mini"
+gpt_model = "gpt-5-mini"
 
 # The name of your own resume which contains place holders "<*profile*>" and "<*skills*>"
 template_path = "Template.docx"
@@ -144,12 +156,9 @@ template_path = "Template.docx"
 # Rename to set the name of resume that is being uploaded each time
 current_resume = "Resume.docx"
 
-
-
-
 #Indeed page elements:
 # The element which contains all listings of job in the page
-job_listings_element = "div.cardOutline.tapItem"
+job_listings_element = 'div.cardOutline.tapItem.result:not([aria-hidden="true"])'
 
 # The elmement identifying title of the each job element
 job_title_element = "h2.jobTitle a"
@@ -167,12 +176,13 @@ job_description_element = "jobDescriptionText"
 posted_date_element = "span[data-testid='myJobsStateDate']"
 
 # The elmement identifying internal apply button
-internal_apply_button_element = "//button[.//span[contains(text(), 'Apply now')] and not(@aria-haspopup='dialog')]"
-    # "indeedApplyButton"
+# The element identifying the internal apply button (must say "Apply now")
+internal_apply_button_element = '//*[@id="indeedApplyButton"]'
+
+
 
 # The elmement identifying external apply button
-external_apply_button_element = "//button[@aria-haspopup='dialog' and .//span[contains(text(), 'Apply now')]]"
-
+external_apply_button_element = "//button[.//span[text()='Apply now']]"
 
 # The element identifying next page button
 next_page_element = '//a[@data-testid="pagination-page-next"]'
@@ -180,16 +190,5 @@ next_page_element = '//a[@data-testid="pagination-page-next"]'
 # The elmement used to identify the job id from the url
 url_query_keword = 'jk'
 
-
-
-
-# Keywords for searching jobs
-job_search_keywords = [
-    "Full-Stack Developer", "Software Engineer", "React Developer",
-    "Node.js Developer", "Mobile App Developer", "Flutter Developer",
-    "Cloud Engineer", "DevOps Engineer", "AWS Specialist", "Agile Developer"
-
-]
-
-# URL used to load the homepage of indeed. Modify based on your country
-indeed_homepage_url = "https://uk.indeed.com/?from=gnav-homepage&from=gnav-util-homepage"
+# The elmement used to identify the job id from the url
+job_search_button = '//*[@id="jobsearch"]/div/div[2]/button'
